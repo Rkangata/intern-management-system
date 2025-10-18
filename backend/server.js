@@ -8,20 +8,21 @@ dotenv.config();
 
 const app = express();
 
-// Connect to MongoDB
+// ✅ Connect to MongoDB
 connectDB();
 
-// CORS configuration - IMPORTANT FOR DEPLOYMENT
+// ✅ CORS configuration
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  process.env.FRONTEND_URL // Will add this after frontend deployment
+  process.env.FRONTEND_URL // Will be used after deployment
 ];
+
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
       return callback(new Error(msg), false);
@@ -31,34 +32,23 @@ app.use(cors({
   credentials: true
 }));
 
-// Middleware
-app.use(cors());
+// ✅ Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
+// ✅ Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/departments', require('./routes/department'));
 app.use('/api/applications', require('./routes/application'));
 app.use('/api/documents', require('./routes/document'));
 app.use('/api/admin', require('./routes/admin'));
 
-// Health check
-app.get('/', (req, res) => {
-  res.json({ message: 'Intern Management System API' });
-});
-
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-// TEMPORARY - Remove after use
+// ✅ TEMPORARY - Create default system admin
 app.get('/api/setup-admin', async (req, res) => {
   try {
     const User = require('./models/User');
-    
+
     const adminExists = await User.findOne({ email: 'admin@ims.com' });
     if (adminExists) {
       return res.json({ message: 'Admin already exists' });
@@ -67,13 +57,24 @@ app.get('/api/setup-admin', async (req, res) => {
     await User.create({
       fullName: 'System Administrator',
       email: 'admin@ims.com',
-      password: 'admin123456',
+      password: 'admin123456', // ⚠️ Change or hash this after first login
       phoneNumber: '+254700000000',
       role: 'admin',
     });
-    
+
     res.json({ message: 'Admin created successfully!' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+});
+
+// ✅ Health check route
+app.get('/', (req, res) => {
+  res.json({ message: 'Intern Management System API' });
+});
+
+// ✅ Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
