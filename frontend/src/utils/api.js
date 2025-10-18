@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+// ====================================================
+// 🌍 Base URL with Environment Support
+// ====================================================
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
 });
 
 // ====================================================
@@ -18,7 +21,6 @@ API.interceptors.request.use((config) => {
 // ====================================================
 // 🧍 AUTH APIs
 // ====================================================
-
 export const register = (formData) =>
   API.post('/auth/register', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -33,14 +35,24 @@ export const updateProfile = (formData) =>
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 
-// ✅ Forgot Password API (optional if you added it in backend)
 export const forgotPassword = (email) =>
   API.post('/auth/forgot-password', { email });
+
+// ✅ Set user’s assigned department and subdepartment
+export const setUserDepartment = (department, subdepartment) =>
+  API.put('/auth/set-department', { department, subdepartment });
+
+// ====================================================
+// 🏢 DEPARTMENT APIs
+// ====================================================
+export const getDepartments = () => API.get('/departments');
+
+export const getSubdepartments = (departmentCode) =>
+  API.get(`/departments/${departmentCode}/subdepartments`);
 
 // ====================================================
 // 📄 APPLICATION APIs
 // ====================================================
-
 export const submitApplication = (formData) =>
   API.post('/applications', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -69,23 +81,9 @@ export const updateApplication = (id, formData) =>
 // ====================================================
 // 📊 ANALYTICS APIs
 // ====================================================
-
-// ✅ Analytics API
 export const getAnalytics = () => API.get('/applications/analytics/stats');
 
 // ====================================================
-// 🏢 DEPARTMENT APIs
+// ✅ Default Export
 // ====================================================
-
-// ✅ Get all departments
-export const getDepartments = () => API.get('/departments');
-
-// ✅ Get subdepartments for a specific department
-export const getSubdepartments = (departmentCode) =>
-  API.get(`/departments/${departmentCode}/subdepartments`);
-
-// ✅ Set user’s assigned department and subdepartment
-export const setUserDepartment = (department, subdepartment) =>
-  API.put('/auth/set-department', { department, subdepartment });
-
 export default API;
