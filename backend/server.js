@@ -54,3 +54,26 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+// TEMPORARY - Remove after use
+app.get('/api/setup-admin', async (req, res) => {
+  try {
+    const User = require('./models/User');
+    
+    const adminExists = await User.findOne({ email: 'admin@ims.com' });
+    if (adminExists) {
+      return res.json({ message: 'Admin already exists' });
+    }
+
+    await User.create({
+      fullName: 'System Administrator',
+      email: 'admin@ims.com',
+      password: 'admin123456',
+      phoneNumber: '+254700000000',
+      role: 'admin',
+    });
+    
+    res.json({ message: 'Admin created successfully!' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
