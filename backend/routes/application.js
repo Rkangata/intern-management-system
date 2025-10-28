@@ -10,9 +10,9 @@ const {
   sendFinalDecisionEmail,
 } = require('../utils/emailService');
 
-// @route   POST /api/applications
-// @desc    Submit new application
-// @access  Private (intern/attachee)
+// =============================================================
+// 📝 SUBMIT APPLICATION (Intern / Attachee)
+// =============================================================
 router.post(
   '/',
   protect,
@@ -42,7 +42,9 @@ router.post(
         applicationLetter: req.files.applicationLetter[0].path,
         cv: req.files.cv[0].path,
         transcripts: req.files.transcripts ? req.files.transcripts[0].path : null,
-        recommendationLetter: req.files.recommendationLetter ? req.files.recommendationLetter[0].path : null,
+        recommendationLetter: req.files.recommendationLetter
+          ? req.files.recommendationLetter[0].path
+          : null,
         nationalId: req.files.nationalId[0].path,
         startDate,
         endDate,
@@ -59,52 +61,81 @@ router.post(
   }
 );
 
-// @route   GET /api/applications/my-applications
-// @desc    Get current user's applications
-// @access  Private (intern/attachee)
-router.get(
-  '/my-applications',
-  protect,
-  authorize('intern', 'attachee'),
-  async (req, res) => {
-    try {
-      const applications = await Application.find({ user: req.user._id })
-        .populate('user', 'fullName email phoneNumber')
-        .sort({ createdAt: -1 });
-      res.json(applications);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  }
-);
-
-// @route   PUT /api/applications/hr-review/:id
-// @desc    HR reviews application
-// @access  Private (hr)
-router.put('/hr-review/:id', protect, authorize('hr'), async (req, res) => {
+// =============================================================
+// 👤 GET USER APPLICATIONS
+// =============================================================
+router.get('/my-applications', protect, authorize('intern', 'attachee'), async (req, res) => {
   try {
-    const { action, comments } = req.body;
-    const application = await Application.findById(req.params.id);
-
-    if (!application) return res.status(404).json({ message: 'Application not found' });
-
-    application.reviewedByHR = req.user._id;
-    application.hrComments = comments;
-    application.status = action === 'approve' ? 'hod_review' : 'rejected';
-    await application.save();
-
-    const user = await User.findById(application.user);
-    await sendHRReviewEmail(user, application, comments);
-    res.json(application);
+    const applications = await Application.find({ user: req.user._id })
+      .populate('user', 'fullName email phoneNumber')
+      .sort({ createdAt: -1 });
+    res.json(applications);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// @route   PUT /api/applications/hod-review/:id
-// @desc    HOD makes final decision
-// @access  Private (hod)
-router.put('/hod-review/:id', protect, authorize('hod'), async (req, res) => {
+// =============================================================
+// 🧾 HR REVIEW - Forward to HOD
+// =============================================================
+router.put('/:id/hr-review', protect, authorize('hr'), async (req, res) => {
+  try {
+    const { comments, hodDepartment, hodSubdepartment } = req.body;
+
+    console.log('=== HR REVIEW REQUEST ===');
+    console.log('Application ID:', req.params.id);
+    console.log('Comments:', comments);
+    console.log('HOD Department:', hodDepartment);
+    console.log('HOD Subdepartment:', hodSubdepartment);
+
+    if (!comments || !comments.trim()) {
+      return res.status(400).json({ message: 'Comments are required' });
+    }
+
+    if (!hodDepartment || !hodSubdepartment) {
+      return res.status(400).json({ message: 'HOD department and subdepartment are required' });
+    }
+
+    const application = await Application.findById(req.params.id);
+
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    console.log('Before Update:', {
+      dept: application.preferredDepartment,
+      subdept: application.preferredSubdepartment,
+    });
+
+    application.hrComments = comments;
+    application.preferredDepartment = hodDepartment;
+    application.preferredSubdepartment = hodSubdepartment;
+    application.status = 'hod_review';
+    application.reviewedBy = req.user._id;
+    application.reviewedAt = Date.now();
+
+    await application.save();
+
+    console.log('After Update:', {
+      dept: application.preferredDepartment,
+      subdept: application.preferredSubdepartment,
+      status: application.status,
+    });
+    console.log('=== END HR REVIEW ===');
+
+    await application.populate('user', '-password');
+
+    res.json(application);
+  } catch (error) {
+    console.error('HR Review error:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// =============================================================
+// 🏢 HOD REVIEW - Final Decision
+// =============================================================
+router.put('/:id/hod-review', protect, authorize('hod'), async (req, res) => { 
   try {
     const { action, comments } = req.body;
     const application = await Application.findById(req.params.id);
@@ -124,13 +155,12 @@ router.put('/hod-review/:id', protect, authorize('hod'), async (req, res) => {
   }
 });
 
-// @route   GET /api/applications/analytics/stats
-// @desc    Get analytics data
-// @access  Private (hr/hod)
+// =============================================================
+// 📊 ANALYTICS ROUTE
+// =============================================================
 router.get('/analytics/stats', protect, authorize('hr', 'hod'), async (req, res) => {
   try {
-    const applications = await Application.find()
-      .populate('user', 'fullName email institution course role');
+    const applications = await Application.find().populate('user', 'fullName email institution course role');
 
     const statusCounts = {
       pending: applications.filter(a => a.status === 'pending').length,
@@ -147,6 +177,7 @@ router.get('/analytics/stats', protect, authorize('hr', 'hod'), async (req, res)
 
     const departmentCounts = {};
     const institutionCounts = {};
+
     applications.forEach(a => {
       const dept = a.preferredDepartment || 'Not Specified';
       departmentCounts[dept] = (departmentCounts[dept] || 0) + 1;
@@ -179,9 +210,8 @@ router.get('/analytics/stats', protect, authorize('hr', 'hod'), async (req, res)
     const timelineData = months.map(month => ({ month, count: monthlyData[month] }));
 
     const totalProcessed = statusCounts.approved + statusCounts.rejected;
-    const approvalRate = totalProcessed > 0
-      ? ((statusCounts.approved / totalProcessed) * 100).toFixed(1)
-      : 0;
+    const approvalRate =
+      totalProcessed > 0 ? ((statusCounts.approved / totalProcessed) * 100).toFixed(1) : 0;
 
     const recentApplications = applications
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -210,62 +240,52 @@ router.get('/analytics/stats', protect, authorize('hr', 'hod'), async (req, res)
   }
 });
 
-// @route   GET /api/applications
-// @desc    Filter applications (HR/HOD view)
-// @access  Private (hr/hod)
-router.get('/', protect, authorize('hr', 'hod'), async (req, res) => {
+// =============================================================
+// 🔍 GET ALL APPLICATIONS (UPDATED FOR HODs)
+// =============================================================
+router.get('/', protect, authorize('hr', 'hod', 'admin'), async (req, res) => {
   try {
-    const { status, department, subdepartment, role, search, startDate, endDate, sortBy, sortOrder } = req.query;
-
     let query = {};
+
+    // ✅ If HOD, show ALL applications in their department, regardless of status
     if (req.user.role === 'hod') {
       query.preferredDepartment = req.user.department;
       query.preferredSubdepartment = req.user.subdepartment;
-    }
-    if (status && status !== 'all') query.status = status;
-    if (department && req.user.role === 'hr') query.preferredDepartment = department;
-    if (subdepartment && req.user.role === 'hr') query.preferredSubdepartment = subdepartment;
-    if (startDate || endDate) {
-      query.createdAt = {};
-      if (startDate) query.createdAt.$gte = new Date(startDate);
-      if (endDate) query.createdAt.$lte = new Date(endDate);
+
+      console.log('=== HOD BACKEND FILTER ===');
+      console.log('HOD User:', req.user.email);
+      console.log('HOD Department:', req.user.department);
+      console.log('HOD Subdepartment:', req.user.subdepartment);
+      console.log('Query:', query);
     }
 
-    let applications = await Application.find(query)
-      .populate('user', 'fullName email phoneNumber institution course role')
-      .populate('reviewedByHR', 'fullName')
-      .populate('reviewedByHOD', 'fullName');
+    // ✅ Apply optional filters for HR or Admin
+    if (req.query.status && req.user.role !== 'hod') query.status = req.query.status;
+    if (req.query.department && req.user.role === 'hr') query.preferredDepartment = req.query.department;
+    if (req.query.subdepartment && req.user.role === 'hr') query.preferredSubdepartment = req.query.subdepartment;
 
-    if (role && role !== 'all') {
-      applications = applications.filter(a => a.user && a.user.role === role);
-    }
+    const applications = await Application.find(query)
+      .populate('user', '-password')
+      .sort({ createdAt: -1 });
 
-    if (search) {
-      const q = search.toLowerCase();
-      applications = applications.filter(a =>
-        a.user?.fullName?.toLowerCase().includes(q) ||
-        a.user?.email?.toLowerCase().includes(q) ||
-        a.user?.institution?.toLowerCase().includes(q) ||
-        a.preferredDepartment?.toLowerCase().includes(q)
+    console.log('Found Applications:', applications.length);
+
+    if (req.user.role === 'hod') {
+      console.log(
+        'Application Details:',
+        applications.map(app => ({
+          id: app._id,
+          dept: app.preferredDepartment,
+          subdept: app.preferredSubdepartment,
+          status: app.status,
+        }))
       );
+      console.log('=== END BACKEND DEBUG ===');
     }
-
-    const sort = sortBy || 'createdAt';
-    const order = sortOrder === 'asc' ? 1 : -1;
-    applications.sort((a, b) => {
-      let av, bv;
-      switch (sort) {
-        case 'name': av = a.user?.fullName || ''; bv = b.user?.fullName || ''; break;
-        case 'department': av = a.preferredDepartment || ''; bv = b.preferredDepartment || ''; break;
-        case 'status': av = a.status || ''; bv = b.status || ''; break;
-        case 'startDate': av = new Date(a.startDate); bv = new Date(b.startDate); break;
-        default: av = new Date(a.createdAt); bv = new Date(b.createdAt);
-      }
-      return (av < bv ? -1 : av > bv ? 1 : 0) * order;
-    });
 
     res.json(applications);
   } catch (error) {
+    console.error('Fetch applications error:', error);
     res.status(500).json({ message: error.message });
   }
 });

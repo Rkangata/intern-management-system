@@ -2,7 +2,15 @@ const departments = {
   OPCS: {
     name: 'Office of the Prime Cabinet Secretary',
     code: 'OPCS',
-    subdepartments: []
+    subdepartments: [{ code: 'ADMIN', name: 'Administration' },
+      { code: 'CPPMD', name: 'CPPMD' },
+      { code: 'HRMD', name: 'HRM&D Division' },
+      { code: 'FINANCE', name: 'Finance Unit' },
+      { code: 'ACCOUNTS', name: 'Accounts Unit' },
+      { code: 'SCM', name: 'SCM Unit' },
+      { code: 'PUBLIC_COMM', name: 'Public Communications Unit' },
+      { code: 'ICT', name: 'ICT Unit' }
+    ]
   },
   SDPA: {
     name: 'State Department for Parliamentary Affairs',
@@ -16,6 +24,7 @@ const departments = {
       { code: 'SCM', name: 'SCM Unit' },
       { code: 'PUBLIC_COMM', name: 'Public Communications Unit' },
       { code: 'ICT', name: 'ICT Unit' }
+      
     ]
   }
 };

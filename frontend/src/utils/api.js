@@ -1,15 +1,10 @@
 import axios from 'axios';
 
-// ====================================================
-// 🌍 Base URL with Environment Support
-// ====================================================
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
 });
 
-// ====================================================
-// 🔐 Attach JWT token to every request if available
-// ====================================================
+// Add token to requests
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -18,9 +13,9 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
-// ====================================================
-// 🧍 AUTH APIs
-// ====================================================
+// ==========================
+// AUTH APIs
+// ==========================
 export const register = (formData) =>
   API.post('/auth/register', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -35,24 +30,19 @@ export const updateProfile = (formData) =>
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 
-export const forgotPassword = (email) =>
-  API.post('/auth/forgot-password', { email });
-
-// ✅ Set user’s assigned department and subdepartment
 export const setUserDepartment = (department, subdepartment) =>
   API.put('/auth/set-department', { department, subdepartment });
 
-// ====================================================
-// 🏢 DEPARTMENT APIs
-// ====================================================
+// ==========================
+// DEPARTMENT APIs
+// ==========================
 export const getDepartments = () => API.get('/departments');
-
 export const getSubdepartments = (departmentCode) =>
   API.get(`/departments/${departmentCode}/subdepartments`);
 
-// ====================================================
-// 📄 APPLICATION APIs
-// ====================================================
+// ==========================
+// APPLICATION APIs
+// ==========================
 export const submitApplication = (formData) =>
   API.post('/applications', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -67,8 +57,13 @@ export const getAllApplications = (status) => {
 
 export const getApplication = (id) => API.get(`/applications/${id}`);
 
-export const hrReviewApplication = (id, comments) =>
-  API.put(`/applications/${id}/hr-review`, { comments });
+// ✅ Updated HR review with HOD department assignment
+export const hrReviewApplication = (id, comments, hodDepartment, hodSubdepartment) =>
+  API.put(`/applications/${id}/hr-review`, {
+    comments,
+    hodDepartment,
+    hodSubdepartment,
+  });
 
 export const hodReviewApplication = (id, action, comments) =>
   API.put(`/applications/${id}/hod-review`, { action, comments });
@@ -78,12 +73,9 @@ export const updateApplication = (id, formData) =>
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 
-// ====================================================
-// 📊 ANALYTICS APIs
-// ====================================================
+// ==========================
+// ANALYTICS APIs
+// ==========================
 export const getAnalytics = () => API.get('/applications/analytics/stats');
 
-// ====================================================
-// ✅ Default Export
-// ====================================================
 export default API;

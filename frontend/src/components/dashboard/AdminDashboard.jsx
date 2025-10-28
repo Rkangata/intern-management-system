@@ -5,18 +5,6 @@ import { FaUserPlus, FaTrash, FaKey, FaCopy, FaChartLine } from 'react-icons/fa'
 import { Link } from 'react-router-dom';
 import DepartmentSelector from '../common/DepartmentSelector';
 
-const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
-});
-
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -42,10 +30,29 @@ const AdminDashboard = () => {
 
   const fetchAllUsers = async () => {
     try {
-      const { data: staffData } = await API.get('/admin/users');
-      const { data: applicants } = await API.get('/admin/all-applicants');
-      setUsers(staffData);
-      setAllUsers([...staffData, ...applicants]);
+      const token = localStorage.getItem('token');
+      
+      const [staffResponse, applicantsResponse] = await Promise.all([
+        axios.get(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/users`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            }
+          }
+        ),
+        axios.get(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/all-applicants`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            }
+          }
+        )
+      ]);
+
+      setUsers(staffResponse.data);
+      setAllUsers([...staffResponse.data, ...applicantsResponse.data]);
     } catch (error) {
       toast.error('Failed to fetch users');
     }
@@ -54,10 +61,23 @@ const AdminDashboard = () => {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      const { data } = await API.post('/admin/create-user', formData);
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/create-user`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
       toast.success('User created successfully!');
-      setGeneratedPassword(data.temporaryPassword);
+      setGeneratedPassword(response.data.temporaryPassword);
       setFormData({
         fullName: '',
         email: '',
@@ -69,8 +89,10 @@ const AdminDashboard = () => {
         department: '',
         subdepartment: '',
       });
+      
       fetchAllUsers();
     } catch (error) {
+      console.error('Error creating user:', error);
       toast.error(error.response?.data?.message || 'Failed to create user');
     } finally {
       setLoading(false);
@@ -80,7 +102,17 @@ const AdminDashboard = () => {
   const handleDeleteUser = async (userId) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     try {
-      await API.delete(`/admin/users/${userId}`);
+      const token = localStorage.getItem('token');
+      
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/users/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        }
+      );
+      
       toast.success('User deleted successfully');
       fetchAllUsers();
     } catch (error) {
@@ -90,9 +122,20 @@ const AdminDashboard = () => {
 
   const handleResetPassword = async (userId) => {
     try {
-      const { data } = await API.put(`/admin/users/${userId}/reset-password`);
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/users/${userId}/reset-password`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        }
+      );
+      
       toast.success('Password reset successfully!');
-      alert(`New Password: ${data.newPassword}\n\nPlease copy and send to the user.`);
+      alert(`New Password: ${response.data.newPassword}\n\nPlease copy and send to the user.`);
     } catch (error) {
       toast.error('Failed to reset password');
     }
@@ -113,9 +156,6 @@ const AdminDashboard = () => {
     intern: allUsers.filter((u) => u.role === 'intern').length,
     attachee: allUsers.filter((u) => u.role === 'attachee').length,
   };
-
-  const requiresAdditionalFields =
-    formData.role === 'intern' || formData.role === 'attachee';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -246,9 +286,6 @@ const AdminDashboard = () => {
                     <FaCopy />
                   </button>
                 </div>
-                <p className="text-xs text-green-600 mt-2">
-                  Please copy this password and send it to the user securely.
-                </p>
               </div>
             )}
 
@@ -325,78 +362,23 @@ const AdminDashboard = () => {
                   />
                 </div>
 
-                {/* Extra fields for interns/attachees */}
-                {requiresAdditionalFields && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Institution *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.institution}
-                        onChange={(e) =>
-                          setFormData({ ...formData, institution: e.target.value })
-                        }
-                        required={requiresAdditionalFields}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                        placeholder="University Name"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Course *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.course}
-                        onChange={(e) =>
-                          setFormData({ ...formData, course: e.target.value })
-                        }
-                        required={requiresAdditionalFields}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                        placeholder="Computer Science"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Year of Study *
-                      </label>
-                      <select
-                        value={formData.yearOfStudy}
-                        onChange={(e) =>
-                          setFormData({ ...formData, yearOfStudy: e.target.value })
-                        }
-                        required={requiresAdditionalFields}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      >
-                        <option value="">Select Year</option>
-                        {[1, 2, 3, 4, 5].map((year) => (
-                          <option key={year} value={year}>
-                            Year {year}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </>
-                )}
-
-                {/* DepartmentSelector */}
+                {/* DepartmentSelector — FIXED */}
                 <div className="md:col-span-2">
                   <DepartmentSelector
-                    selectedDepartment={formData.department}
-                    selectedSubdepartment={formData.subdepartment}
+                    selectedDepartment={formData.department || ''}
+                    selectedSubdepartment={formData.subdepartment || ''}
                     onDepartmentChange={(value) =>
-                      setFormData({
-                        ...formData,
+                      setFormData((prev) => ({
+                        ...prev,
                         department: value,
                         subdepartment: '',
-                      })
+                      }))
                     }
                     onSubdepartmentChange={(value) =>
-                      setFormData({ ...formData, subdepartment: value })
+                      setFormData((prev) => ({
+                        ...prev,
+                        subdepartment: value,
+                      }))
                     }
                     required={true}
                   />

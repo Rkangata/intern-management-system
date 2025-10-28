@@ -71,7 +71,7 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
 });
 
 // ========================================================
-// 🔐 LOGIN
+// 🔐 LOGIN (UPDATED WITH isActive CHECK TEMPORARILY DISABLED)
 // ========================================================
 
 // @route   POST /api/auth/login
@@ -80,24 +80,61 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password, role } = req.body;
-    const user = await User.findOne({ email });
 
-    if (user && (await user.comparePassword(password))) {
-      if (user.role !== role) {
-        return res.status(401).json({ message: 'Invalid credentials or role' });
-      }
+    console.log('=== LOGIN ATTEMPT ===');
+    console.log('Email:', email);
+    console.log('Role:', role);
 
-      res.json({
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
     }
+
+    // Find user and explicitly include password
+    const user = await User.findOne({ email }).select('+password');
+
+    console.log('User found:', user ? 'Yes' : 'No');
+
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    console.log('User role:', user.role);
+    console.log('Requested role:', role);
+
+    // Check if role matches (if role is provided)
+    if (role && user.role !== role) {
+      return res.status(401).json({ message: `Invalid credentials for ${role}` });
+    }
+
+    // Check password
+    const isMatch = await user.matchPassword(password);
+    console.log('Password match:', isMatch);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // TEMPORARILY COMMENTED OUT
+    // // Check if user is active
+    // if (!user.isActive) {
+    //   return res.status(401).json({ message: 'Your account has been deactivated' });
+    // }
+
+    console.log('Login successful for:', user.email);
+    console.log('=== END LOGIN ===');
+
+    res.json({
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      department: user.department,
+      subdepartment: user.subdepartment,
+      token: generateToken(user._id),
+    });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -166,7 +203,7 @@ router.put('/profile', protect, upload.single('profilePicture'), async (req, res
 });
 
 // ========================================================
-// 🏢 DEPARTMENT ASSIGNMENT (UPDATED)
+// 🏢 DEPARTMENT ASSIGNMENT
 // ========================================================
 
 // @route   PUT /api/auth/set-department
@@ -206,7 +243,7 @@ router.put('/set-department', protect, async (req, res) => {
 });
 
 // ========================================================
-// 🔑 PASSWORD RESET (FORGOT PASSWORD)
+// 🔑 PASSWORD RESET (UPDATED WITH DEBUGGING)
 // ========================================================
 
 // @route   POST /api/auth/forgot-password
@@ -216,19 +253,30 @@ router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
 
+    console.log('=== PASSWORD RESET REQUEST ===');
+    console.log('Email:', email);
+
     const user = await User.findOne({ email });
+
     if (!user) {
       // Don't reveal if user exists for security
       return res.status(404).json({ message: 'If the email exists, a reset link will be sent' });
     }
 
+    console.log('User found:', user.email);
+
     // Generate a temporary password
     const tempPassword =
       Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+
+    console.log('New temp password generated:', tempPassword);
+
+    // Directly set password (will be hashed by pre-save hook)
     user.password = tempPassword;
     await user.save();
 
-    console.log(`Password reset for ${email}: ${tempPassword}`);
+    console.log('Password updated successfully');
+    console.log('=== END PASSWORD RESET ===');
 
     res.json({
       message: 'Password reset successful',
@@ -236,6 +284,7 @@ router.post('/forgot-password', async (req, res) => {
       userName: user.fullName,
     });
   } catch (error) {
+    console.error('Password reset error:', error);
     res.status(500).json({ message: error.message });
   }
 });
