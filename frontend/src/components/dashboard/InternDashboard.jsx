@@ -15,18 +15,40 @@ const InternDashboard = () => {
     startDate: '',
     endDate: '',
     preferredDepartment: '',
+    preferredSubdepartment: '',
   });
 
-  const [documents, setDocuments] = useState({
-    applicationLetter: null,
-    cv: null,
-    transcripts: null,
-    recommendationLetter: null,
-    nationalId: null,
-  });
+  // ✅ Role-specific documents initialization
+  const [documents, setDocuments] = useState(
+    user?.role === 'intern'
+      ? {
+          appointmentLetter: null,
+          degreeCertificate: null,
+          transcripts: null,
+          nationalIdOrPassport: null,
+          kraPinCertificate: null,
+          goodConductCertificate: null,
+          passportPhotos: null,
+          shifCard: null,
+          insuranceCover: null,
+          nssfCard: null,
+          bioDataForm: null,
+        }
+      : {
+          applicationLetter: null,
+          cv: null,
+          attacheeTranscripts: null,
+          recommendationLetter: null,
+          attacheeNationalId: null,
+          attacheeInsurance: null,
+          goodConductCertOrReceipt: null,
+        }
+  );
 
   const [profileData, setProfileData] = useState({
-    fullName: user?.fullName || '',
+    firstName: user?.firstName || '',
+    middleName: user?.middleName || '',
+    lastName: user?.lastName || '',
     phoneNumber: user?.phoneNumber || '',
     institution: user?.institution || '',
     course: user?.course || '',
@@ -64,7 +86,10 @@ const InternDashboard = () => {
       formData.append('startDate', applicationData.startDate);
       formData.append('endDate', applicationData.endDate);
       formData.append('preferredDepartment', applicationData.preferredDepartment);
+      formData.append('preferredSubdepartment', applicationData.preferredSubdepartment);
+      formData.append('applicantRole', user.role); // ✅ Important: Send role
       
+      // Append all documents
       Object.keys(documents).forEach((key) => {
         if (documents[key]) {
           formData.append(key, documents[key]);
@@ -77,14 +102,38 @@ const InternDashboard = () => {
       fetchApplications();
       
       // Reset form
-      setApplicationData({ startDate: '', endDate: '', preferredDepartment: '' });
-      setDocuments({
-        applicationLetter: null,
-        cv: null,
-        transcripts: null,
-        recommendationLetter: null,
-        nationalId: null,
+      setApplicationData({ 
+        startDate: '', 
+        endDate: '', 
+        preferredDepartment: '',
+        preferredSubdepartment: '' 
       });
+      
+      // Reset documents based on role
+      const resetDocs = user?.role === 'intern'
+        ? {
+            appointmentLetter: null,
+            degreeCertificate: null,
+            transcripts: null,
+            nationalIdOrPassport: null,
+            kraPinCertificate: null,
+            goodConductCertificate: null,
+            passportPhotos: null,
+            shifCard: null,
+            insuranceCover: null,
+            nssfCard: null,
+            bioDataForm: null,
+          }
+        : {
+            applicationLetter: null,
+            cv: null,
+            attacheeTranscripts: null,
+            recommendationLetter: null,
+            attacheeNationalId: null,
+            attacheeInsurance: null,
+            goodConductCertOrReceipt: null,
+          };
+      setDocuments(resetDocs);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to submit application');
     } finally {
@@ -138,6 +187,35 @@ const InternDashboard = () => {
         {statusText[status]}
       </span>
     );
+  };
+
+  // ✅ Get role-specific document fields
+  const getDocumentFields = () => {
+    if (user?.role === 'intern') {
+      return [
+        { name: 'appointmentLetter', label: 'Copy of Appointment Letter', required: true },
+        { name: 'degreeCertificate', label: 'Bachelor\'s Degree Certificate', required: true },
+        { name: 'transcripts', label: 'Transcripts', required: true },
+        { name: 'nationalIdOrPassport', label: 'National ID or Passport', required: true },
+        { name: 'kraPinCertificate', label: 'KRA PIN Certificate', required: true },
+        { name: 'goodConductCertificate', label: 'Valid Certificate of Good Conduct', required: true },
+        { name: 'passportPhotos', label: 'Two Colour Passport Photos', required: true },
+        { name: 'shifCard', label: 'SHIF Card', required: true },
+        { name: 'insuranceCover', label: 'Personal Accident Insurance Cover', required: true },
+        { name: 'nssfCard', label: 'NSSF Card', required: true },
+        { name: 'bioDataForm', label: 'Duly Filled Personal Bio Data Form', required: true },
+      ];
+    } else {
+      return [
+        { name: 'applicationLetter', label: 'Application Letter', required: true },
+        { name: 'cv', label: 'CV/Resume', required: true },
+        { name: 'attacheeTranscripts', label: 'Academic Transcripts', required: true },
+        { name: 'recommendationLetter', label: 'Recommendation Letter', required: true },
+        { name: 'attacheeNationalId', label: 'National ID', required: true },
+        { name: 'attacheeInsurance', label: 'Insurance Cover', required: true },
+        { name: 'goodConductCertOrReceipt', label: 'Certificate of Good Conduct / Receipt', required: true },
+      ];
+    }
   };
 
   return (
@@ -297,7 +375,7 @@ const InternDashboard = () => {
                         <div className="flex justify-between items-start mb-4">
                           <div>
                             <h3 className="text-lg font-semibold text-gray-800">
-                              {app.preferredDepartment}
+                              {app.preferredDepartment} - {app.preferredSubdepartment}
                             </h3>
                             <p className="text-sm text-gray-600 mt-1">
                               {new Date(app.startDate).toLocaleDateString()} - {new Date(app.endDate).toLocaleDateString()}
@@ -346,7 +424,9 @@ const InternDashboard = () => {
             ) : (
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800">Submit Application</h2>
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    Submit {user?.role === 'intern' ? 'Internship' : 'Attachment'} Application
+                  </h2>
                   <button
                     onClick={() => setShowApplicationForm(false)}
                     className="text-gray-600 hover:text-gray-800"
@@ -356,10 +436,11 @@ const InternDashboard = () => {
                 </div>
 
                 <form onSubmit={handleApplicationSubmit} className="space-y-6">
+                  {/* Date & Department Selection */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Start Date *
+                        Start Date <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="date"
@@ -373,7 +454,7 @@ const InternDashboard = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        End Date *
+                        End Date <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="date"
@@ -385,87 +466,93 @@ const InternDashboard = () => {
                       />
                     </div>
 
-                    <div className="md:col-span-2">
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Preferred Department *
+                        Department <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
+                      <select
                         name="preferredDepartment"
                         value={applicationData.preferredDepartment}
+                        onChange={(e) => {
+                          setApplicationData({
+                            ...applicationData,
+                            preferredDepartment: e.target.value,
+                            preferredSubdepartment: '',
+                          });
+                        }}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      >
+                        <option value="">Select Department</option>
+                        <option value="OPCS">Office of the Prime Cabinet Secretary</option>
+                        <option value="SDPA">State Department for Parliamentary Affairs</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Subdepartment <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="preferredSubdepartment"
+                        value={applicationData.preferredSubdepartment}
                         onChange={handleApplicationChange}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                        placeholder="e.g., IT Department"
-                      />
+                        disabled={!applicationData.preferredDepartment}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
+                      >
+                        <option value="">Select Subdepartment</option>
+                        {applicationData.preferredDepartment === 'SDPA' && (
+                          <>
+                            <option value="ADMIN">Administration</option>
+                            <option value="CPPMD">CPPMD</option>
+                            <option value="HRMD">HRM&D Division</option>
+                            <option value="FINANCE">Finance Unit</option>
+                            <option value="ACCOUNTS">Accounts Unit</option>
+                            <option value="SCM">SCM Unit</option>
+                            <option value="PUBLIC_COMM">Public Communications Unit</option>
+                            <option value="ICT">ICT Unit</option>
+                          </>
+                        )}
+                        {applicationData.preferredDepartment === 'OPCS' && (
+                          <>
+                            <option value="ADMIN">Administration</option>
+                            <option value="POLICY">Policy & Planning</option>
+                            <option value="COORDINATION">Coordination</option>
+                            <option value="CPPMD">CPPMD</option>
+                            <option value="HRMD">HRM&D Division</option>
+                            <option value="FINANCE">Finance Unit</option>
+                            <option value="ACCOUNTS">Accounts Unit</option>
+                            <option value="SCM">SCM Unit</option>
+                            <option value="PUBLIC_COMM">Public Communications Unit</option>
+                            <option value="ICT">ICT Unit</option>
+                          </>
+                        )}
+                      </select>
                     </div>
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Application Letter * (PDF)
-                      </label>
-                      <input
-                        type="file"
-                        name="applicationLetter"
-                        accept=".pdf"
-                        onChange={handleDocumentChange}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        CV/Resume * (PDF)
-                      </label>
-                      <input
-                        type="file"
-                        name="cv"
-                        accept=".pdf"
-                        onChange={handleDocumentChange}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        National ID (PDF/Image)
-                      </label>
-                      <input
-                        type="file"
-                        name="nationalId"
-                        accept=".pdf,image/*"
-                        onChange={handleDocumentChange}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Transcripts (Optional PDF)
-                      </label>
-                      <input
-                        type="file"
-                        name="transcripts"
-                        accept=".pdf"
-                        onChange={handleDocumentChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Recommendation Letter (Optional PDF)
-                      </label>
-                      <input
-                        type="file"
-                        name="recommendationLetter"
-                        accept=".pdf"
-                        onChange={handleDocumentChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
+                  {/* ✅ Role-Specific Document Uploads */}
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Required Documents {user?.role === 'intern' ? '(11 documents)' : '(7 documents)'}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {getDocumentFields().map((field) => (
+                        <div key={field.name}>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {field.label} {field.required && <span className="text-red-500">*</span>}
+                          </label>
+                          <input
+                            type="file"
+                            name={field.name}
+                            accept=".pdf,.doc,.docx,image/*"
+                            onChange={handleDocumentChange}
+                            required={field.required}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          />
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -497,15 +584,41 @@ const InternDashboard = () => {
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Update Profile</h2>
 
             <form onSubmit={handleProfileUpdate} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
+                    First Name
                   </label>
                   <input
                     type="text"
-                    name="fullName"
-                    value={profileData.fullName}
+                    name="firstName"
+                    value={profileData.firstName}
+                    onChange={handleProfileChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Middle Name
+                  </label>
+                  <input
+                    type="text"
+                    name="middleName"
+                    value={profileData.middleName}
+                    onChange={handleProfileChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={profileData.lastName}
                     onChange={handleProfileChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   />
@@ -578,7 +691,8 @@ const InternDashboard = () => {
                     name="department"
                     value={profileData.department}
                     onChange={handleProfileChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    disabled
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
                   />
                 </div>
               </div>
