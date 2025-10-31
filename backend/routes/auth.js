@@ -3,10 +3,10 @@ const router = express.Router();
 const User = require('../models/User');
 const { protect, generateToken } = require('../middleware/auth');
 const upload = require('../middleware/upload');
-const { sendWelcomeEmail } = require('../utils/emailService'); // ✅ Email service import
+const { sendWelcomeEmail } = require('../utils/emailService');
 
 // ========================================================
-// 🧍 USER REGISTRATION
+// 🧍 USER REGISTRATION (UPDATED WITH SPLIT NAMES)
 // ========================================================
 
 // @route   POST /api/auth/register
@@ -15,7 +15,9 @@ const { sendWelcomeEmail } = require('../utils/emailService'); // ✅ Email serv
 router.post('/register', upload.single('profilePicture'), async (req, res) => {
   try {
     const {
-      fullName,
+      firstName,
+      middleName,
+      lastName,
       email,
       password,
       phoneNumber,
@@ -26,6 +28,11 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       department,
       subdepartment,
     } = req.body;
+
+    console.log('=== REGISTRATION REQUEST ===');
+    console.log('Name:', firstName, middleName, lastName);
+    console.log('Email:', email);
+    console.log('Role:', role);
 
     // Check if user exists
     const userExists = await User.findOne({ email });
@@ -38,9 +45,11 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       return res.status(400).json({ message: 'Invalid role for registration' });
     }
 
-    // Create user
+    // Create user with split names
     const user = await User.create({
-      fullName,
+      firstName,
+      middleName: middleName || '', // Optional
+      lastName,
       email,
       password,
       phoneNumber,
@@ -53,12 +62,19 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       profilePicture: req.file ? req.file.path : null,
     });
 
-    // ✅ Send welcome email after registration
+    console.log('User created successfully:', user.email);
+    console.log('Full name:', user.fullName);
+    console.log('=== END REGISTRATION ===');
+
+    // Send welcome email
     if (user) {
       await sendWelcomeEmail(user);
 
       res.status(201).json({
         _id: user._id,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
         fullName: user.fullName,
         email: user.email,
         role: user.role,
@@ -66,12 +82,13 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       });
     }
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
 // ========================================================
-// 🔐 LOGIN (UPDATED WITH isActive CHECK TEMPORARILY DISABLED)
+// 🔐 LOGIN (WITH SPLIT NAME RESPONSE)
 // ========================================================
 
 // @route   POST /api/auth/login
@@ -85,47 +102,39 @@ router.post('/login', async (req, res) => {
     console.log('Email:', email);
     console.log('Role:', role);
 
-    // Validate input
     if (!email || !password) {
       return res.status(400).json({ message: 'Please provide email and password' });
     }
 
-    // Find user and explicitly include password
     const user = await User.findOne({ email }).select('+password');
-
-    console.log('User found:', user ? 'Yes' : 'No');
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    console.log('User role:', user.role);
-    console.log('Requested role:', role);
-
-    // Check if role matches (if role is provided)
     if (role && user.role !== role) {
       return res.status(401).json({ message: `Invalid credentials for ${role}` });
     }
 
-    // Check password
     const isMatch = await user.matchPassword(password);
-    console.log('Password match:', isMatch);
 
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // TEMPORARILY COMMENTED OUT
-    // // Check if user is active
-    // if (!user.isActive) {
-    //   return res.status(401).json({ message: 'Your account has been deactivated' });
-    // }
+    // Check if active (only if explicitly false)
+    if (user.isActive === false) {
+      return res.status(401).json({ message: 'Your account has been deactivated' });
+    }
 
     console.log('Login successful for:', user.email);
     console.log('=== END LOGIN ===');
 
     res.json({
       _id: user._id,
+      firstName: user.firstName,
+      middleName: user.middleName,
+      lastName: user.lastName,
       fullName: user.fullName,
       email: user.email,
       role: user.role,
@@ -163,7 +172,11 @@ router.put('/profile', protect, upload.single('profilePicture'), async (req, res
     const user = await User.findById(req.user._id);
 
     if (user) {
-      user.fullName = req.body.fullName || user.fullName;
+      // Update split name fields
+      user.firstName = req.body.firstName || user.firstName;
+      user.middleName = req.body.middleName || user.middleName;
+      user.lastName = req.body.lastName || user.lastName;
+      
       user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
       user.institution = req.body.institution || user.institution;
       user.course = req.body.course || user.course;
@@ -183,6 +196,9 @@ router.put('/profile', protect, upload.single('profilePicture'), async (req, res
 
       res.json({
         _id: updatedUser._id,
+        firstName: updatedUser.firstName,
+        middleName: updatedUser.middleName,
+        lastName: updatedUser.lastName,
         fullName: updatedUser.fullName,
         email: updatedUser.email,
         role: updatedUser.role,
@@ -213,7 +229,6 @@ router.put('/set-department', protect, async (req, res) => {
   try {
     const { department, subdepartment } = req.body;
 
-    // Admin doesn't need department
     if (req.user.role === 'admin') {
       return res.status(403).json({ message: 'Admins do not need departments' });
     }
@@ -228,6 +243,9 @@ router.put('/set-department', protect, async (req, res) => {
 
       res.json({
         _id: updatedUser._id,
+        firstName: updatedUser.firstName,
+        middleName: updatedUser.middleName,
+        lastName: updatedUser.lastName,
         fullName: updatedUser.fullName,
         email: updatedUser.email,
         role: updatedUser.role,
@@ -243,7 +261,7 @@ router.put('/set-department', protect, async (req, res) => {
 });
 
 // ========================================================
-// 🔑 PASSWORD RESET (UPDATED WITH DEBUGGING)
+// 🔑 PASSWORD RESET
 // ========================================================
 
 // @route   POST /api/auth/forgot-password
@@ -259,19 +277,16 @@ router.post('/forgot-password', async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      // Don't reveal if user exists for security
       return res.status(404).json({ message: 'If the email exists, a reset link will be sent' });
     }
 
     console.log('User found:', user.email);
 
-    // Generate a temporary password
     const tempPassword =
       Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
 
     console.log('New temp password generated:', tempPassword);
 
-    // Directly set password (will be hashed by pre-save hook)
     user.password = tempPassword;
     await user.save();
 

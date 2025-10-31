@@ -42,7 +42,7 @@ const Welcome = () => {
       {/* HERO SECTION */}
       <section className="text-center mt-10 px-4">
         <h1 className="text-4xl font-bold text-gray-800 mb-4">
-         Internship & Attatchment Management System (IAMS)
+          Internship & Attachment Management System (IAMS)
         </h1>
         <p className="text-2xl text-gray-600 max-w-2xl mx-auto">
           Streamline your internship and attachment application process through a
@@ -118,84 +118,78 @@ const Welcome = () => {
         </div>
       </section>
 
-      {/* DIVIDER */}
-      <div className="relative my-16">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t-2 border-gray-300"></div>
-        </div>
-        <div className="relative flex justify-center">
-          <span className="bg-gradient-to-br from-blue-50 via-white to-purple-50 px-6 text-gray-500 font-semibold">
-            ADMINISTRATIVE ACCESS
-          </span>
-        </div>
-      </div>
-
-      {/* STAFF SECTION */}
-      <section>
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">
-            For Staff & Management
-          </h2>
-          <p className="text-gray-600">Review and manage applications</p>
+      {/* ADMINISTRATIVE ACCESS SECTION */}
+      <section className="mt-16 px-4">
+        <div className="border-t-2 border-gray-300 my-8"></div>
+        <div className="text-center mb-6">
+          <h3 className="text-lg font-semibold text-gray-700 uppercase tracking-wide">
+            Administrative Access
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Staff & Management Login
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
           {/* HR Officer */}
-          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-transform duration-300 hover:-translate-y-2">
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-8 rounded-t-xl flex flex-col items-center">
-              <FaUserShield className="text-6xl mb-4" />
-              <h2 className="text-2xl font-bold">HR Officer</h2>
+          <Link
+            to="/login/hr"
+            className="group bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+          >
+            <div className="text-center">
+              <FaUserShield className="text-4xl mb-3 mx-auto" />
+              <h3 className="text-xl font-bold mb-2">HR Officer</h3>
+              <p className="text-sm text-purple-100">Human Resources</p>
             </div>
-            <div className="p-6">
-              <p className="text-gray-600 mb-6 text-center text-sm">
-                .
-              </p>
-              <Link
-                to="/login/hr"
-                className="block w-full bg-purple-500 hover:bg-purple-600 text-white text-center py-3 rounded-lg font-semibold"
-              >
-                Staff Login
-              </Link>
-            </div>
-          </div>
+          </Link>
 
-          {/* HOD */}
-          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-transform duration-300 hover:-translate-y-2">
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-8 rounded-t-xl flex flex-col items-center">
-              <FaUserCog className="text-6xl mb-4" />
-              <h2 className="text-2xl font-bold">Head of Department</h2>
+          {/* Head of Department */}
+          <Link
+            to="/login/hod"
+            className="group bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+          >
+            <div className="text-center">
+              <FaUserCog className="text-4xl mb-3 mx-auto" />
+              <h3 className="text-xl font-bold mb-2">HOD</h3>
+              <p className="text-sm text-orange-100">Department Head</p>
             </div>
-            <div className="p-6">
-              <p className="text-gray-600 mb-6 text-center text-sm">
-                
-              </p>
-              <Link
-                to="/login/hod"
-                className="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center py-3 rounded-lg font-semibold"
-              >
-                HOD Login
-              </Link>
+          </Link>
+
+          {/* Chief of Staff */}
+          <Link
+            to="/login/chief_of_staff"
+            className="group bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+          >
+            <div className="text-center">
+              <div className="text-4xl mb-3">⭐</div>
+              <h3 className="text-xl font-bold mb-2">Chief of Staff</h3>
+              <p className="text-sm text-indigo-100">Department Overview</p>
             </div>
-          </div>
+          </Link>
+
+          {/* Principal Secretary */}
+          <Link
+            to="/login/principal_secretary"
+            className="group bg-gradient-to-br from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+          >
+            <div className="text-center">
+              <div className="text-4xl mb-3">🏛️</div>
+              <h3 className="text-xl font-bold mb-2">Principal Secretary</h3>
+              <p className="text-sm text-pink-100">Senior Management</p>
+            </div>
+          </Link>
 
           {/* Admin */}
-          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-transform duration-300 hover:-translate-y-2">
-            <div className="bg-gradient-to-r from-gray-700 to-gray-800 text-white p-8 rounded-t-xl flex flex-col items-center">
-              <FaUserCircle className="text-6xl mb-4" />
-              <h2 className="text-2xl font-bold">Admin</h2>
+          <Link
+            to="/login/admin"
+            className="group bg-gradient-to-br from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 md:col-span-2 lg:col-span-4"
+          >
+            <div className="text-center">
+              <FaUserCircle className="text-4xl mb-3 mx-auto" />
+              <h3 className="text-xl font-bold mb-2">System Administrator</h3>
+              <p className="text-sm text-gray-300">Full System Access</p>
             </div>
-            <div className="p-6">
-              <p className="text-gray-600 mb-6 text-center text-sm">
-                 
-              </p>
-              <Link
-                to="/login/admin"
-                className="block w-full bg-gray-700 hover:bg-gray-800 text-white text-center py-3 rounded-lg font-semibold"
-              >
-                Admin Login
-              </Link>
-            </div>
-          </div>
+          </Link>
         </div>
 
         {/* STAFF NOTE */}

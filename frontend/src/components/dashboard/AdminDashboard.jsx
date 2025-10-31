@@ -3,7 +3,6 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FaUserPlus, FaTrash, FaKey, FaCopy, FaChartLine } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import DepartmentSelector from '../common/DepartmentSelector';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -12,7 +11,9 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [formData, setFormData] = useState({
-    fullName: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
     email: '',
     phoneNumber: '',
     role: 'hr',
@@ -79,7 +80,9 @@ const AdminDashboard = () => {
       toast.success('User created successfully!');
       setGeneratedPassword(response.data.temporaryPassword);
       setFormData({
-        fullName: '',
+        firstName: '',
+        middleName: '',
+        lastName: '',
         email: '',
         phoneNumber: '',
         role: 'hr',
@@ -153,19 +156,39 @@ const AdminDashboard = () => {
     total: allUsers.length,
     hr: allUsers.filter((u) => u.role === 'hr').length,
     hod: allUsers.filter((u) => u.role === 'hod').length,
+    cos: allUsers.filter((u) => u.role === 'chief_of_staff').length,
+    ps: allUsers.filter((u) => u.role === 'principal_secretary').length,
     intern: allUsers.filter((u) => u.role === 'intern').length,
     attachee: allUsers.filter((u) => u.role === 'attachee').length,
   };
 
+  // Helper to check if role needs subdepartment
+  const needsSubdepartment = (role) => {
+    return ['intern', 'attachee', 'hr', 'hod'].includes(role);
+  };
+
+  // Helper to get role display name
+  const getRoleDisplay = (role) => {
+    const roleMap = {
+      hr: 'HR Officer',
+      hod: 'Head of Department',
+      chief_of_staff: 'Chief of Staff',
+      principal_secretary: 'Principal Secretary',
+      intern: 'Intern',
+      attachee: 'Attachee'
+    };
+    return roleMap[role] || role.toUpperCase();
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="bg-white dark:bg-gray-800 shadow">
         <div className="container mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">Super Admin Dashboard</h1>
-              <p className="text-gray-600 mt-1">Complete system management and control</p>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Super Admin Dashboard</h1>
+              <p className="text-gray-600 dark:text-gray-300 mt-1">Complete system management and control</p>
             </div>
             <div className="flex gap-3">
               <Link
@@ -182,72 +205,61 @@ const AdminDashboard = () => {
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600 text-sm">Total Users</p>
-            <p className="text-3xl font-bold text-gray-800 mt-2">{stats.total}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <p className="text-gray-600 dark:text-gray-400 text-xs">Total Users</p>
+            <p className="text-2xl font-bold text-gray-800 dark:text-white mt-1">{stats.total}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600 text-sm">HR Officers</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">{stats.hr}</p>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <p className="text-gray-600 dark:text-gray-400 text-xs">HR Officers</p>
+            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{stats.hr}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600 text-sm">HODs</p>
-            <p className="text-3xl font-bold text-orange-600 mt-2">{stats.hod}</p>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <p className="text-gray-600 dark:text-gray-400 text-xs">HODs</p>
+            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">{stats.hod}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600 text-sm">Interns</p>
-            <p className="text-3xl font-bold text-blue-600 mt-2">{stats.intern}</p>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <p className="text-gray-600 dark:text-gray-400 text-xs">Chief of Staff</p>
+            <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{stats.cos}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600 text-sm">Attachees</p>
-            <p className="text-3xl font-bold text-green-600 mt-2">{stats.attachee}</p>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <p className="text-gray-600 dark:text-gray-400 text-xs">Prin. Secretary</p>
+            <p className="text-2xl font-bold text-pink-600 dark:text-pink-400 mt-1">{stats.ps}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <p className="text-gray-600 dark:text-gray-400 text-xs">Interns</p>
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{stats.intern}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <p className="text-gray-600 dark:text-gray-400 text-xs">Attachees</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.attachee}</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="flex overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('all')}
-              className={`px-6 py-4 font-semibold border-b-2 ${
-                activeTab === 'all' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-600'
-              }`}
-            >
-              All Users ({stats.total})
-            </button>
-            <button
-              onClick={() => setActiveTab('hr')}
-              className={`px-6 py-4 font-semibold border-b-2 ${
-                activeTab === 'hr' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-600'
-              }`}
-            >
-              HR ({stats.hr})
-            </button>
-            <button
-              onClick={() => setActiveTab('hod')}
-              className={`px-6 py-4 font-semibold border-b-2 ${
-                activeTab === 'hod' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-600'
-              }`}
-            >
-              HOD ({stats.hod})
-            </button>
-            <button
-              onClick={() => setActiveTab('intern')}
-              className={`px-6 py-4 font-semibold border-b-2 ${
-                activeTab === 'intern' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-600'
-              }`}
-            >
-              Interns ({stats.intern})
-            </button>
-            <button
-              onClick={() => setActiveTab('attachee')}
-              className={`px-6 py-4 font-semibold border-b-2 ${
-                activeTab === 'attachee' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-600'
-              }`}
-            >
-              Attachees ({stats.attachee})
-            </button>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 overflow-x-auto">
+          <div className="flex">
+            {[
+              { key: 'all', label: `All (${stats.total})`, color: 'blue' },
+              { key: 'hr', label: `HR (${stats.hr})`, color: 'purple' },
+              { key: 'hod', label: `HOD (${stats.hod})`, color: 'orange' },
+              { key: 'chief_of_staff', label: `COS (${stats.cos})`, color: 'indigo' },
+              { key: 'principal_secretary', label: `PS (${stats.ps})`, color: 'pink' },
+              { key: 'intern', label: `Interns (${stats.intern})`, color: 'blue' },
+              { key: 'attachee', label: `Attachees (${stats.attachee})`, color: 'green' },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-3 font-semibold border-b-2 whitespace-nowrap text-sm ${
+                  activeTab === tab.key
+                    ? `border-${tab.color}-500 text-${tab.color}-600 dark:text-${tab.color}-400`
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -267,21 +279,21 @@ const AdminDashboard = () => {
 
         {/* Create User Form */}
         {showCreateForm && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Create New User</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Create New User</h2>
 
             {generatedPassword && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                <p className="text-green-800 font-semibold mb-2">
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+                <p className="text-green-800 dark:text-green-300 font-semibold mb-2">
                   ✅ User Created Successfully!
                 </p>
                 <div className="flex items-center gap-2">
-                  <p className="text-sm text-green-700">
+                  <p className="text-sm text-green-700 dark:text-green-400">
                     <strong>Temporary Password:</strong> {generatedPassword}
                   </p>
                   <button
                     onClick={() => copyToClipboard(generatedPassword)}
-                    className="text-green-600 hover:text-green-700"
+                    className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
                   >
                     <FaCopy />
                   </button>
@@ -293,8 +305,8 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Role */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Role *
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Role <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={formData.role}
@@ -302,36 +314,71 @@ const AdminDashboard = () => {
                       setFormData({ ...formData, role: e.target.value })
                     }
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="hr">HR Officer</option>
                     <option value="hod">Head of Department</option>
+                    <option value="chief_of_staff">Chief of Staff</option>
+                    <option value="principal_secretary">Principal Secretary</option>
                     <option value="intern">Intern</option>
                     <option value="attachee">Attachee</option>
                   </select>
                 </div>
 
-                {/* Full Name */}
+                {/* First Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name *
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    First Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    value={formData.fullName}
+                    value={formData.firstName}
                     onChange={(e) =>
-                      setFormData({ ...formData, fullName: e.target.value })
+                      setFormData({ ...formData, firstName: e.target.value })
                     }
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    placeholder="John Doe"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="John"
+                  />
+                </div>
+
+                {/* Middle Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Middle Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.middleName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, middleName: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Michael"
+                  />
+                </div>
+
+                {/* Last Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Last Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, lastName: e.target.value })
+                    }
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Doe"
                   />
                 </div>
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email *
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Email <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -340,15 +387,15 @@ const AdminDashboard = () => {
                       setFormData({ ...formData, email: e.target.value })
                     }
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    placeholder="john@example.com"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="john.doe@example.com"
                   />
                 </div>
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number *
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Phone Number <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
@@ -357,36 +404,144 @@ const AdminDashboard = () => {
                       setFormData({ ...formData, phoneNumber: e.target.value })
                     }
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     placeholder="+254 700 000000"
                   />
                 </div>
 
-                {/* DepartmentSelector — FIXED */}
-                <div className="md:col-span-2">
-                  <DepartmentSelector
-                    selectedDepartment={formData.department || ''}
-                    selectedSubdepartment={formData.subdepartment || ''}
-                    onDepartmentChange={(value) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        department: value,
-                        subdepartment: '',
-                      }))
-                    }
-                    onSubdepartmentChange={(value) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        subdepartment: value,
-                      }))
-                    }
-                    required={true}
-                  />
+                {/* Department */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Department <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.department}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value, subdepartment: '' })}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="">Select Department</option>
+                    <option value="OPCS">Office of the Prime Cabinet Secretary</option>
+                    <option value="SDPA">State Department for Parliamentary Affairs</option>
+                  </select>
                 </div>
+
+                {/* Subdepartment - Only for roles that need it */}
+                {needsSubdepartment(formData.role) && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Subdepartment <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={formData.subdepartment}
+                      onChange={(e) => setFormData({ ...formData, subdepartment: e.target.value })}
+                      required
+                      disabled={!formData.department}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-900"
+                    >
+                      <option value="">Select Subdepartment</option>
+                      {formData.department === 'SDPA' && (
+                        <>
+                          <option value="ADMIN">Administration</option>
+                          <option value="CPPMD">CPPMD</option>
+                          <option value="HRMD">HRM&D Division</option>
+                          <option value="FINANCE">Finance Unit</option>
+                          <option value="ACCOUNTS">Accounts Unit</option>
+                          <option value="SCM">SCM Unit</option>
+                          <option value="PUBLIC_COMM">Public Communications Unit</option>
+                          <option value="ICT">ICT Unit</option>
+                        </>
+                      )}
+                      {formData.department === 'OPCS' && (
+                        <>
+                          <option value="ADMIN">Administration</option>
+                          <option value="POLICY">Policy & Planning</option>
+                          <option value="COORDINATION">Coordination</option>
+                          <option value="CPPMD">CPPMD</option>
+                          <option value="HRMD">HRM&D Division</option>
+                          <option value="FINANCE">Finance Unit</option>
+                          <option value="ACCOUNTS">Accounts Unit</option>
+                          <option value="SCM">SCM Unit</option>
+                          <option value="PUBLIC_COMM">Public Communications Unit</option>
+                          <option value="ICT">ICT Unit</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                )}
+
+                {/* Show message for COS/PS */}
+                {!needsSubdepartment(formData.role) && formData.role !== 'admin' && (
+                  <div className="md:col-span-2">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                      <p className="text-sm text-blue-800 dark:text-blue-300">
+                        ℹ️ {getRoleDisplay(formData.role)} works at department level only. No subdepartment required.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Institution, Course, Year - Only for interns/attachees */}
+                {(formData.role === 'intern' || formData.role === 'attachee') && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Institution <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.institution}
+                        onChange={(e) =>
+                          setFormData({ ...formData, institution: e.target.value })
+                        }
+                        required
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        placeholder="University Name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Course <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.course}
+                        onChange={(e) =>
+                          setFormData({ ...formData, course: e.target.value })
+                        }
+                        required
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        placeholder="Computer Science"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Year of Study <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={formData.yearOfStudy}
+                        onChange={(e) =>
+                          setFormData({ ...formData, yearOfStudy: e.target.value })
+                        }
+                        required
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        <option value="">Select Year</option>
+                        <option value="1">Year 1</option>
+                        <option value="2">Year 2</option>
+                        <option value="3">Year 3</option>
+                        <option value="4">Year 4</option>
+                        <option value="5">Year 5</option>
+                      </select>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-4">
                 <button
                   type="submit"
                   disabled={loading}
@@ -400,7 +555,7 @@ const AdminDashboard = () => {
                     setShowCreateForm(false);
                     setGeneratedPassword('');
                   }}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg font-semibold"
+                  className="bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white px-6 py-2 rounded-lg font-semibold"
                 >
                   Cancel
                 </button>
@@ -410,86 +565,90 @@ const AdminDashboard = () => {
         )}
 
         {/* Users List */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b">
-            <h2 className="text-xl font-bold text-gray-800">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="p-6 border-b dark:border-gray-700">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white">
               {activeTab === 'all'
                 ? 'All Users'
-                : `${activeTab.toUpperCase()} Users`}
+                : `${getRoleDisplay(activeTab)} Users`}
             </h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     Phone
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     Role
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     Department
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredUsers.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50">
+                  <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{user.fullName}</div>
+                      <div className="font-medium text-gray-900 dark:text-white">{user.fullName}</div>
                       {user.institution && (
-                        <div className="text-xs text-gray-500">{user.institution}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{user.institution}</div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
                       {user.email}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
                       {user.phoneNumber}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-semibold ${
                           user.role === 'hr'
-                            ? 'bg-purple-100 text-purple-800'
+                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                             : user.role === 'hod'
-                            ? 'bg-orange-100 text-orange-800'
+                            ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                            : user.role === 'chief_of_staff'
+                            ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200'
+                            : user.role === 'principal_secretary'
+                            ? 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'
                             : user.role === 'intern'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-green-100 text-green-800'
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                            : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                         }`}
                       >
-                        {user.role.toUpperCase()}
+                        {getRoleDisplay(user.role)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
                       <div>{user.department || 'Not Set'}</div>
                       {user.subdepartment && user.subdepartment !== 'NONE' && (
-                        <div className="text-xs text-gray-500">{user.subdepartment}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{user.subdepartment}</div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleResetPassword(user._id)}
-                          className="text-yellow-600 hover:text-yellow-800"
+                          className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-300"
                           title="Reset Password"
                         >
                           <FaKey />
                         </button>
                         <button
                           onClick={() => handleDeleteUser(user._id)}
-                          className="text-red-600 hover:text-red-800"
+                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                           title="Delete User"
                         >
                           <FaTrash />
@@ -500,6 +659,12 @@ const AdminDashboard = () => {
                 ))}
               </tbody>
             </table>
+            
+            {filteredUsers.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400">No users found in this category</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

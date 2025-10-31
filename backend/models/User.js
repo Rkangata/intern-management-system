@@ -2,11 +2,29 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  fullName: {
+  // ✅ SPLIT NAME FIELDS
+  firstName: {
     type: String,
-    required: true,
+    required: [true, 'First name is required'],
     trim: true
   },
+  middleName: {
+    type: String,
+    trim: true,
+    default: '' // Optional
+  },
+  lastName: {
+    type: String,
+    required: [true, 'Last name is required'],
+    trim: true
+  },
+  
+  // ✅ KEEP fullName as virtual field for backward compatibility
+  fullName: {
+    type: String,
+    trim: true
+  },
+
   email: {
     type: String,
     required: true,
@@ -25,7 +43,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['intern', 'attachee', 'hr', 'hod', 'admin'],
+    enum: ['intern', 'attachee', 'hr', 'hod', 'admin', 'chief_of_staff', 'principal_secretary'],
     required: true
   },
 
@@ -49,7 +67,9 @@ const userSchema = new mongoose.Schema({
     }
   },
 
-  // ✅ Department fields (required for all except admin)
+  // ✅ Department fields
+  // Required for all except admin
+  // COS and PS only need department (no subdepartment)
   department: {
     type: String,
     required: function () {
@@ -59,7 +79,8 @@ const userSchema = new mongoose.Schema({
   subdepartment: {
     type: String,
     required: function () {
-      return this.role !== 'admin';
+      // Only required for roles that work at subdepartment level
+      return ['intern', 'attachee', 'hr', 'hod'].includes(this.role);
     }
   },
 
@@ -72,13 +93,24 @@ const userSchema = new mongoose.Schema({
   // ✅ New field for user activity status
   isActive: {
     type: Boolean,
-    default: true // Ensures new users are active by default
+    default: true
   },
 
   createdAt: {
     type: Date,
     default: Date.now
   }
+});
+
+// ✅ Auto-generate fullName before saving
+userSchema.pre('save', function(next) {
+  // Generate fullName from individual fields
+  if (this.firstName && this.lastName) {
+    this.fullName = this.middleName 
+      ? `${this.firstName} ${this.middleName} ${this.lastName}`.trim()
+      : `${this.firstName} ${this.lastName}`.trim();
+  }
+  next();
 });
 
 // ✅ Encrypt password before saving
@@ -102,6 +134,13 @@ userSchema.methods.matchPassword = async function(enteredPassword) {
   console.log('Password match result:', match);
   return match;
 };
+
+// ✅ Virtual field to get full name (for queries that use fullName)
+userSchema.virtual('displayName').get(function() {
+  return this.middleName 
+    ? `${this.firstName} ${this.middleName} ${this.lastName}`
+    : `${this.firstName} ${this.lastName}`;
+});
 
 // ✅ Export User model
 module.exports = mongoose.model('User', userSchema);

@@ -18,6 +18,7 @@ import InternDashboard from './components/dashboard/InternDashboard';
 import HRDashboard from './components/dashboard/HRDashboard';
 import HODDashboard from './components/dashboard/HODDashboard';
 import AdminDashboard from './components/dashboard/AdminDashboard';
+import COSPSDashboard from './components/dashboard/COSPSDashboard';
 import AnalyticsDashboard from './components/dashboard/AnalyticsDashboard';
 
 // ====================================================
@@ -63,6 +64,9 @@ const DashboardRouter = () => {
       return <HRDashboard />;
     case 'hod':
       return <HODDashboard />;
+    case 'chief_of_staff':
+    case 'principal_secretary':
+      return <COSPSDashboard />;
     case 'admin':
       return <AdminDashboard />;
     default:
@@ -104,7 +108,7 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-6">
-            {(user.role === 'hr' || user.role === 'hod' || user.role === 'admin') && (
+            {(user.role === 'hr' || user.role === 'hod' || user.role === 'admin' || user.role === 'chief_of_staff' || user.role === 'principal_secretary') && (
               <Link
                 to="/analytics"
                 className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-medium"
@@ -149,7 +153,7 @@ function AppContent() {
   const [showDepartmentModal, setShowDepartmentModal] = useState(false);
 
   useEffect(() => {
-    if (user && user.role !== 'admin') {
+    if (user && user.role !== 'admin' && user.role !== 'chief_of_staff' && user.role !== 'principal_secretary') {
       if (!user.department || !user.subdepartment) {
         setShowDepartmentModal(true);
       }
@@ -184,7 +188,7 @@ function AppContent() {
         <Route
           path="/analytics"
           element={
-            <ProtectedRoute allowedRoles={['hr', 'hod', 'admin']}>
+            <ProtectedRoute allowedRoles={['hr', 'hod', 'admin', 'chief_of_staff', 'principal_secretary']}>
               <AnalyticsDashboard />
             </ProtectedRoute>
           }

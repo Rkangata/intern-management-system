@@ -11,55 +11,107 @@ const {
 } = require('../utils/emailService');
 
 // =============================================================
-// 📝 SUBMIT APPLICATION (Intern / Attachee)
+// 📝 SUBMIT APPLICATION (Intern / Attachee) - UPDATED
 // =============================================================
-router.post(
-  '/',
-  protect,
-  authorize('intern', 'attachee'),
-  upload.fields([
-    { name: 'applicationLetter', maxCount: 1 },
-    { name: 'cv', maxCount: 1 },
-    { name: 'transcripts', maxCount: 1 },
-    { name: 'recommendationLetter', maxCount: 1 },
-    { name: 'nationalId', maxCount: 1 },
-  ]),
-  async (req, res) => {
-    try {
-      const { startDate, endDate, preferredDepartment, preferredSubdepartment } = req.body;
+router.post('/', protect, authorize('intern', 'attachee'), upload.fields([
+  // Intern documents
+  { name: 'appointmentLetter', maxCount: 1 },
+  { name: 'degreeCertificate', maxCount: 1 },
+  { name: 'transcripts', maxCount: 1 },
+  { name: 'nationalIdOrPassport', maxCount: 1 },
+  { name: 'kraPinCertificate', maxCount: 1 },
+  { name: 'goodConductCertificate', maxCount: 1 },
+  { name: 'passportPhotos', maxCount: 1 },
+  { name: 'shifCard', maxCount: 1 },
+  { name: 'insuranceCover', maxCount: 1 },
+  { name: 'nssfCard', maxCount: 1 },
+  { name: 'bioDataForm', maxCount: 1 },
+  // Attachee documents
+  { name: 'applicationLetter', maxCount: 1 },
+  { name: 'cv', maxCount: 1 },
+  { name: 'attacheeTranscripts', maxCount: 1 },
+  { name: 'recommendationLetter', maxCount: 1 },
+  { name: 'attacheeNationalId', maxCount: 1 },
+  { name: 'attacheeInsurance', maxCount: 1 },
+  { name: 'goodConductCertOrReceipt', maxCount: 1 },
+]), async (req, res) => {
+  try {
+    const { startDate, endDate, preferredDepartment, preferredSubdepartment, applicantRole } = req.body;
 
-      const existingApplication = await Application.findOne({
-        user: req.user._id,
-        status: { $in: ['pending', 'hr_review', 'hod_review'] },
-      });
+    console.log('=== APPLICATION SUBMISSION ===');
+    console.log('User:', req.user.email);
+    console.log('Role:', applicantRole);
+    console.log('Files received:', Object.keys(req.files));
 
-      if (existingApplication) {
-        return res.status(400).json({ message: 'You already have a pending application' });
-      }
+    // Check for existing pending application
+    const existingApplication = await Application.findOne({
+      user: req.user._id,
+      status: { $in: ['pending', 'hr_review', 'hod_review'] },
+    });
 
-      const application = await Application.create({
-        user: req.user._id,
-        applicationLetter: req.files.applicationLetter[0].path,
-        cv: req.files.cv[0].path,
-        transcripts: req.files.transcripts ? req.files.transcripts[0].path : null,
-        recommendationLetter: req.files.recommendationLetter
-          ? req.files.recommendationLetter[0].path
-          : null,
-        nationalId: req.files.nationalId[0].path,
-        startDate,
-        endDate,
-        preferredDepartment,
-        preferredSubdepartment: preferredSubdepartment || 'NONE',
-      });
-
-      await sendApplicationSubmittedEmail(req.user, application);
-      res.status(201).json(application);
-    } catch (error) {
-      console.error('Application submission error:', error);
-      res.status(500).json({ message: error.message });
+    if (existingApplication) {
+      return res.status(400).json({ message: 'You already have a pending application' });
     }
+
+    // Build application data based on role
+    const applicationData = {
+      user: req.user._id,
+      applicantRole: applicantRole || req.user.role,
+      startDate,
+      endDate,
+      preferredDepartment,
+      preferredSubdepartment: preferredSubdepartment || 'NONE',
+    };
+
+    // Add role-specific documents
+    const role = applicantRole || req.user.role;
+    if (role === 'intern') {
+      applicationData.appointmentLetter = req.files.appointmentLetter?.[0]?.path;
+      applicationData.degreeCertificate = req.files.degreeCertificate?.[0]?.path;
+      applicationData.transcripts = req.files.transcripts?.[0]?.path;
+      applicationData.nationalIdOrPassport = req.files.nationalIdOrPassport?.[0]?.path;
+      applicationData.kraPinCertificate = req.files.kraPinCertificate?.[0]?.path;
+      applicationData.goodConductCertificate = req.files.goodConductCertificate?.[0]?.path;
+      applicationData.passportPhotos = req.files.passportPhotos?.[0]?.path;
+      applicationData.shifCard = req.files.shifCard?.[0]?.path;
+      applicationData.insuranceCover = req.files.insuranceCover?.[0]?.path;
+      applicationData.nssfCard = req.files.nssfCard?.[0]?.path;
+      applicationData.bioDataForm = req.files.bioDataForm?.[0]?.path;
+
+      // Validate required intern documents
+      if (!applicationData.appointmentLetter || !applicationData.degreeCertificate || 
+          !applicationData.transcripts || !applicationData.nationalIdOrPassport ||
+          !applicationData.kraPinCertificate || !applicationData.goodConductCertificate) {
+        return res.status(400).json({ message: 'Missing required intern documents' });
+      }
+    } else {
+      applicationData.applicationLetter = req.files.applicationLetter?.[0]?.path;
+      applicationData.cv = req.files.cv?.[0]?.path;
+      applicationData.attacheeTranscripts = req.files.attacheeTranscripts?.[0]?.path;
+      applicationData.recommendationLetter = req.files.recommendationLetter?.[0]?.path;
+      applicationData.attacheeNationalId = req.files.attacheeNationalId?.[0]?.path;
+      applicationData.attacheeInsurance = req.files.attacheeInsurance?.[0]?.path;
+      applicationData.goodConductCertOrReceipt = req.files.goodConductCertOrReceipt?.[0]?.path;
+
+      // Validate required attachee documents
+      if (!applicationData.applicationLetter || !applicationData.cv || 
+          !applicationData.attacheeTranscripts || !applicationData.attacheeNationalId) {
+        return res.status(400).json({ message: 'Missing required attachee documents' });
+      }
+    }
+
+    const application = await Application.create(applicationData);
+
+    console.log('Application created:', application._id);
+    console.log('=== END APPLICATION SUBMISSION ===');
+
+    await sendApplicationSubmittedEmail(req.user, application);
+    res.status(201).json(application);
+  } catch (error) {
+    console.error('Application submission error:', error);
+    res.status(500).json({ message: error.message });
   }
-);
+});
 
 // =============================================================
 // 👤 GET USER APPLICATIONS
@@ -67,7 +119,7 @@ router.post(
 router.get('/my-applications', protect, authorize('intern', 'attachee'), async (req, res) => {
   try {
     const applications = await Application.find({ user: req.user._id })
-      .populate('user', 'fullName email phoneNumber')
+      .populate('user', 'firstName middleName lastName email phoneNumber institution course yearOfStudy role')
       .sort({ createdAt: -1 });
     res.json(applications);
   } catch (error) {
@@ -156,11 +208,21 @@ router.put('/:id/hod-review', protect, authorize('hod'), async (req, res) => {
 });
 
 // =============================================================
-// 📊 ANALYTICS ROUTE
+// 📊 ANALYTICS ROUTE - UPDATED FOR ROLE-SPECIFIC DATA
 // =============================================================
-router.get('/analytics/stats', protect, authorize('hr', 'hod'), async (req, res) => {
+router.get('/analytics/stats', protect, authorize('hr', 'hod', 'chief_of_staff', 'principal_secretary'), async (req, res) => {
   try {
-    const applications = await Application.find().populate('user', 'fullName email institution course role');
+    let query = {};
+
+    // Apply role-based filters for analytics too
+    if (req.user.role === 'hod') {
+      query.preferredDepartment = req.user.department;
+      query.preferredSubdepartment = req.user.subdepartment;
+    } else if (req.user.role === 'chief_of_staff' || req.user.role === 'principal_secretary') {
+      query.preferredDepartment = req.user.department;
+    }
+
+    const applications = await Application.find(query).populate('user', 'firstName middleName lastName email institution course role');
 
     const statusCounts = {
       pending: applications.filter(a => a.status === 'pending').length,
@@ -170,9 +232,10 @@ router.get('/analytics/stats', protect, authorize('hr', 'hod'), async (req, res)
       rejected: applications.filter(a => a.status === 'rejected').length,
     };
 
+    // Role counts based on applicantRole field
     const roleCounts = {
-      intern: applications.filter(a => a.user?.role === 'intern').length,
-      attachee: applications.filter(a => a.user?.role === 'attachee').length,
+      intern: applications.filter(a => a.applicantRole === 'intern').length,
+      attachee: applications.filter(a => a.applicantRole === 'attachee').length,
     };
 
     const departmentCounts = {};
@@ -218,9 +281,10 @@ router.get('/analytics/stats', protect, authorize('hr', 'hod'), async (req, res)
       .slice(0, 5)
       .map(a => ({
         id: a._id,
-        name: a.user?.fullName,
-        role: a.user?.role,
+        name: `${a.user?.firstName} ${a.user?.lastName}`,
+        role: a.applicantRole,
         department: a.preferredDepartment,
+        subdepartment: a.preferredSubdepartment,
         status: a.status,
         createdAt: a.createdAt,
       }));
@@ -241,13 +305,13 @@ router.get('/analytics/stats', protect, authorize('hr', 'hod'), async (req, res)
 });
 
 // =============================================================
-// 🔍 GET ALL APPLICATIONS (UPDATED FOR HODs)
+// 🔍 GET ALL APPLICATIONS (UPDATED FOR ALL ROLES)
 // =============================================================
-router.get('/', protect, authorize('hr', 'hod', 'admin'), async (req, res) => {
+router.get('/', protect, authorize('hr', 'hod', 'admin', 'chief_of_staff', 'principal_secretary'), async (req, res) => {
   try {
     let query = {};
 
-    // ✅ If HOD, show ALL applications in their department, regardless of status
+    // HOD - only their subdepartment
     if (req.user.role === 'hod') {
       query.preferredDepartment = req.user.department;
       query.preferredSubdepartment = req.user.subdepartment;
@@ -258,11 +322,31 @@ router.get('/', protect, authorize('hr', 'hod', 'admin'), async (req, res) => {
       console.log('HOD Subdepartment:', req.user.subdepartment);
       console.log('Query:', query);
     }
+    
+    // COS and PS - only their department (all subdepartments)
+    if (req.user.role === 'chief_of_staff' || req.user.role === 'principal_secretary') {
+      query.preferredDepartment = req.user.department;
 
-    // ✅ Apply optional filters for HR or Admin
-    if (req.query.status && req.user.role !== 'hod') query.status = req.query.status;
-    if (req.query.department && req.user.role === 'hr') query.preferredDepartment = req.query.department;
-    if (req.query.subdepartment && req.user.role === 'hr') query.preferredSubdepartment = req.query.subdepartment;
+      console.log('=== COS/PS BACKEND FILTER ===');
+      console.log('User:', req.user.email);
+      console.log('Role:', req.user.role);
+      console.log('Department:', req.user.department);
+      console.log('Query:', query);
+    }
+
+    // HR and Admin see all (no department filter)
+
+    // Status filter (applies to all roles)
+    if (req.query.status) {
+      query.status = req.query.status;
+    }
+
+    // Additional filters for HR and Admin only
+    if (req.user.role === 'hr' || req.user.role === 'admin') {
+      if (req.query.department) query.preferredDepartment = req.query.department;
+      if (req.query.subdepartment) query.preferredSubdepartment = req.query.subdepartment;
+      if (req.query.role) query.applicantRole = req.query.role;
+    }
 
     const applications = await Application.find(query)
       .populate('user', '-password')
@@ -270,13 +354,14 @@ router.get('/', protect, authorize('hr', 'hod', 'admin'), async (req, res) => {
 
     console.log('Found Applications:', applications.length);
 
-    if (req.user.role === 'hod') {
+    if (req.user.role === 'hod' || req.user.role === 'chief_of_staff' || req.user.role === 'principal_secretary') {
       console.log(
         'Application Details:',
         applications.map(app => ({
           id: app._id,
           dept: app.preferredDepartment,
           subdept: app.preferredSubdepartment,
+          role: app.applicantRole,
           status: app.status,
         }))
       );

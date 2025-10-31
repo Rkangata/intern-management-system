@@ -6,22 +6,131 @@ const applicationSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+
+  // ========================================
+  // INTERN DOCUMENTS (Different from Attachee)
+  // ========================================
+  // For INTERNS only:
+  appointmentLetter: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'intern';
+    }
+  },
+  degreeCertificate: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'intern';
+    }
+  },
+  transcripts: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'intern';
+    }
+  },
+  nationalIdOrPassport: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'intern';
+    }
+  },
+  kraPinCertificate: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'intern';
+    }
+  },
+  goodConductCertificate: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'intern';
+    }
+  },
+  passportPhotos: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'intern';
+    }
+  },
+  shifCard: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'intern';
+    }
+  },
+  insuranceCover: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'intern';
+    }
+  },
+  nssfCard: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'intern';
+    }
+  },
+  bioDataForm: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'intern';
+    }
+  },
+
+  // ========================================
+  // ATTACHEE DOCUMENTS (Different from Intern)
+  // ========================================
+  // For ATTACHEES only:
   applicationLetter: {
     type: String,
-    required: true
+    required: function() {
+      return this.applicantRole === 'attachee';
+    }
   },
   cv: {
     type: String,
-    required: true
+    required: function() {
+      return this.applicantRole === 'attachee';
+    }
   },
-  transcripts: {
-    type: String
+  attacheeTranscripts: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'attachee';
+    }
   },
   recommendationLetter: {
-    type: String
-  },
-  nationalId: {
     type: String,
+    required: function() {
+      return this.applicantRole === 'attachee';
+    }
+  },
+  attacheeNationalId: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'attachee';
+    }
+  },
+  attacheeInsurance: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'attachee';
+    }
+  },
+  goodConductCertOrReceipt: {
+    type: String,
+    required: function() {
+      return this.applicantRole === 'attachee';
+    }
+  },
+
+  // ========================================
+  // COMMON FIELDS FOR BOTH
+  // ========================================
+  applicantRole: {
+    type: String,
+    enum: ['intern', 'attachee'],
     required: true
   },
   startDate: {
@@ -45,6 +154,10 @@ const applicationSchema = new mongoose.Schema({
     enum: ['pending', 'hr_review', 'hod_review', 'approved', 'rejected'],
     default: 'pending'
   },
+
+  // ========================================
+  // REVIEW & COMMENTS
+  // ========================================
   hrComments: {
     type: String
   },
@@ -65,6 +178,10 @@ const applicationSchema = new mongoose.Schema({
   hodReviewDate: {
     type: Date
   },
+
+  // ========================================
+  // TIMESTAMPS
+  // ========================================
   createdAt: {
     type: Date,
     default: Date.now

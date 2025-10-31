@@ -9,7 +9,9 @@ const { protect, authorize } = require('../middleware/auth');
 router.post('/create-user', protect, authorize('admin'), async (req, res) => {
   try {
     const {
-      fullName,
+      firstName,
+      middleName,
+      lastName,
       email,
       phoneNumber,
       role,
@@ -20,6 +22,11 @@ router.post('/create-user', protect, authorize('admin'), async (req, res) => {
       subdepartment
     } = req.body;
 
+    console.log('=== CREATE USER REQUEST ===');
+    console.log('Role:', role);
+    console.log('Department:', department);
+    console.log('Subdepartment:', subdepartment);
+
     // Check if user exists
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -27,18 +34,29 @@ router.post('/create-user', protect, authorize('admin'), async (req, res) => {
     }
 
     // Generate temporary password
-    const tempPassword = Math.random().toString(36).slice(-8);
+    const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
 
     // Prepare user data
     const userData = {
-      fullName,
+      firstName,
+      middleName: middleName || '',
+      lastName,
       email,
       password: tempPassword,
       phoneNumber,
       role,
-      department,
-      subdepartment: subdepartment || 'NONE',
     };
+
+    // Add department (required for all except admin)
+    if (role !== 'admin') {
+      userData.department = department;
+      
+      // Subdepartment only for roles that need it
+      // COS and PS work at department level only
+      if (['intern', 'attachee', 'hr', 'hod'].includes(role)) {
+        userData.subdepartment = subdepartment || 'NONE';
+      }
+    }
 
     // Add extra fields for interns or attachees
     if (role === 'intern' || role === 'attachee') {
@@ -47,30 +65,43 @@ router.post('/create-user', protect, authorize('admin'), async (req, res) => {
       userData.yearOfStudy = yearOfStudy;
     }
 
+    console.log('Creating user with data:', { ...userData, password: '[HIDDEN]' });
+
     // Create user
     const user = await User.create(userData);
+
+    console.log('User created successfully:', user._id);
+    console.log('=== END CREATE USER ===');
 
     res.status(201).json({
       message: 'User created successfully',
       user: {
         _id: user._id,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
         fullName: user.fullName,
         email: user.email,
         role: user.role,
+        department: user.department,
+        subdepartment: user.subdepartment,
       },
       temporaryPassword: tempPassword,
     });
   } catch (error) {
+    console.error('Create user error:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
 // @route   GET /api/admin/users
-// @desc    Get all HR and HOD users
+// @desc    Get all staff users (HR, HOD, COS, PS)
 // @access  Private (admin only)
 router.get('/users', protect, authorize('admin'), async (req, res) => {
   try {
-    const users = await User.find({ role: { $in: ['hr', 'hod'] } })
+    const users = await User.find({ 
+      role: { $in: ['hr', 'hod', 'chief_of_staff', 'principal_secretary'] } 
+    })
       .select('-password')
       .sort({ createdAt: -1 });
 
@@ -96,7 +127,7 @@ router.get('/all-applicants', protect, authorize('admin'), async (req, res) => {
 });
 
 // @route   DELETE /api/admin/users/:id
-// @desc    Delete HR or HOD user
+// @desc    Delete user
 // @access  Private (admin only)
 router.delete('/users/:id', protect, authorize('admin'), async (req, res) => {
   try {
@@ -106,8 +137,9 @@ router.delete('/users/:id', protect, authorize('admin'), async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (!['hr', 'hod', 'officer', 'intern', 'attachee'].includes(user.role)) {
-      return res.status(400).json({ message: 'Invalid user role for deletion' });
+    // Prevent deleting admin users
+    if (user.role === 'admin') {
+      return res.status(400).json({ message: 'Cannot delete admin users' });
     }
 
     await user.deleteOne();
@@ -129,7 +161,7 @@ router.put('/users/:id/reset-password', protect, authorize('admin'), async (req,
     }
 
     // Generate new password
-    const newPassword = Math.random().toString(36).slice(-8);
+    const newPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
     user.password = newPassword;
     await user.save();
 
