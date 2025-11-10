@@ -3,7 +3,8 @@ const router = express.Router();
 const User = require('../models/User');
 const { protect, generateToken } = require('../middleware/auth');
 const upload = require('../middleware/upload');
-const { sendWelcomeEmail } = require('../utils/emailService');
+const { sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/emailService');
+const bcrypt = require('bcryptjs');
 
 // ========================================================
 // 🧍 USER REGISTRATION (UPDATED WITH SPLIT NAMES)
@@ -64,23 +65,22 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
 
     console.log('User created successfully:', user.email);
     console.log('Full name:', user.fullName);
+
+    // ✅ Send welcome email
+    await sendWelcomeEmail(user);
+
     console.log('=== END REGISTRATION ===');
 
-    // Send welcome email
-    if (user) {
-      await sendWelcomeEmail(user);
-
-      res.status(201).json({
-        _id: user._id,
-        firstName: user.firstName,
-        middleName: user.middleName,
-        lastName: user.lastName,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id),
-      });
-    }
+    res.status(201).json({
+      _id: user._id,
+      firstName: user.firstName,
+      middleName: user.middleName,
+      lastName: user.lastName,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      token: generateToken(user._id),
+    });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ message: error.message });
@@ -261,7 +261,7 @@ router.put('/set-department', protect, async (req, res) => {
 });
 
 // ========================================================
-// 🔑 PASSWORD RESET
+// 🔑 PASSWORD RESET - ✅ SENDS EMAIL INSTEAD OF SHOWING PASSWORD
 // ========================================================
 
 // @route   POST /api/auth/forgot-password
@@ -277,30 +277,40 @@ router.post('/forgot-password', async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ message: 'If the email exists, a reset link will be sent' });
+      // Don't reveal if user exists for security
+      return res.json({ 
+        message: 'If an account with this email exists, a password reset link has been sent.' 
+      });
     }
 
     console.log('User found:', user.email);
 
-    const tempPassword =
-      Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    // Generate temporary password
+    const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
 
-    console.log('New temp password generated:', tempPassword);
+    console.log('New temp password generated');
 
-    user.password = tempPassword;
-    await user.save();
+    // Update password (use updateOne to avoid validation issues)
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { password: await bcrypt.hash(tempPassword, 10) } }
+    );
 
     console.log('Password updated successfully');
+
+    // ✅ Send password reset email (NO PASSWORD IN RESPONSE)
+    await sendPasswordResetEmail(user, tempPassword);
+
     console.log('=== END PASSWORD RESET ===');
 
+    // ✅ SECURITY: Don't return the password in the response
     res.json({
-      message: 'Password reset successful',
-      temporaryPassword: tempPassword,
-      userName: user.fullName,
+      message: 'Password reset email has been sent to your email address. Please check your inbox.',
+      emailSent: true
     });
   } catch (error) {
     console.error('Password reset error:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Failed to process password reset. Please try again.' });
   }
 });
 
