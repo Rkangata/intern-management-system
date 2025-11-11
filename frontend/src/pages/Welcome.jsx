@@ -1,13 +1,24 @@
-import { Link } from 'react-router-dom';
+import { useContext, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import {
   FaUserGraduate,
   FaUserTie,
   FaUserShield,
   FaUserCog,
-  FaUserCircle,
 } from 'react-icons/fa';
 
 const Welcome = () => {
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  // ✅ FIX: Redirect logged-in users to dashboard (prevents navbar showing on back button)
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col justify-between">
       {/* HEADER */}
@@ -28,7 +39,7 @@ const Welcome = () => {
                 Office of the Prime Cabinet Secretary
                 <br />
                 <span className="text-blue-700 font-semibold">
-                  Ministry of Foreign Affairs
+                  Ministry for Foreign Affairs
                 </span>
               </h2>
               <p className="text-lg text-gray-700 font-medium">
@@ -118,7 +129,7 @@ const Welcome = () => {
         </div>
       </section>
 
-      {/* ADMINISTRATIVE ACCESS SECTION */}
+      {/* ADMINISTRATIVE ACCESS SECTION - ✅ ADMIN REMOVED */}
       <section className="mt-16 px-4">
         <div className="border-t-2 border-gray-300 my-8"></div>
         <div className="text-center mb-6">
@@ -138,7 +149,7 @@ const Welcome = () => {
           >
             <div className="text-center">
               <FaUserShield className="text-4xl mb-3 mx-auto" />
-              <h3 className="text-xl font-bold mb-2">HR Officer</h3>
+              <h3 className="text-xl font-bold mb-2">Human Resource Officer</h3>
               <p className="text-sm text-purple-100">Human Resources</p>
             </div>
           </Link>
@@ -150,7 +161,7 @@ const Welcome = () => {
           >
             <div className="text-center">
               <FaUserCog className="text-4xl mb-3 mx-auto" />
-              <h3 className="text-xl font-bold mb-2">HOD</h3>
+              <h3 className="text-xl font-bold mb-2">Head Of Department</h3>
               <p className="text-sm text-orange-100">Department Head</p>
             </div>
           </Link>
@@ -178,28 +189,13 @@ const Welcome = () => {
               <p className="text-sm text-pink-100">Senior Management</p>
             </div>
           </Link>
-
-          {/* Admin */}
-          <Link
-            to="/login/admin"
-            className="group bg-gradient-to-br from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 md:col-span-2 lg:col-span-4"
-          >
-            <div className="text-center">
-              <FaUserCircle className="text-4xl mb-3 mx-auto" />
-              <h3 className="text-xl font-bold mb-2">System Administrator</h3>
-              <p className="text-sm text-gray-300">Full System Access</p>
-            </div>
-          </Link>
         </div>
 
-        {/* STAFF NOTE */}
+        {/* STAFF NOTE - ✅ Updated without admin email */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-3xl mx-auto mt-8 mb-20">
           <p className="text-sm text-blue-800 text-center">
-            <strong>Note for Staff:</strong> If you don't have login credentials, contact the
-            system administrator at{' '}
-            <a href="mailto:admin@ims.com" className="underline font-semibold">
-              admin@ims.com
-            </a>
+            <strong>Note for Staff:</strong> If you don't have login credentials, contact your
+            department's Human Resource Officer or system administrator.
           </p>
         </div>
       </section>

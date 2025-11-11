@@ -11,7 +11,7 @@ import { FaMoon, FaSun } from 'react-icons/fa';
 import Welcome from './pages/Welcome';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
-import ForgotPassword from './components/auth/ForgotPassword';
+import ForgotPassword from './pages/ForgotPassword';
 
 // Dashboards
 import InternDashboard from './components/dashboard/InternDashboard';
