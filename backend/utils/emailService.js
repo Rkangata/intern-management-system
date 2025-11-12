@@ -1,7 +1,7 @@
 const nodemailer = require("nodemailer");
 
 // ========================================================
-// 📧 EMAIL TRANSPORTER CONFIGURATION
+// 📧 EMAIL TRANSPORTER CONFIGURATION - ✅ FIXED
 // ========================================================
 const createTransporter = () => {
   // Check if email is configured
@@ -11,13 +11,18 @@ const createTransporter = () => {
   }
 
   return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false, // true for 465, false for other ports
+    service: 'gmail', // ✅ FIX 1: Use 'service' instead of manual host/port
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
+    // ✅ FIX 2: Add these security options
+    tls: {
+      rejectUnauthorized: false
+    },
+    // ✅ FIX 3: Increase timeout
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
   });
 };
 
@@ -27,8 +32,13 @@ if (transporter) {
   transporter.verify((error, success) => {
     if (error) {
       console.error("❌ Email service error:", error.message);
+      console.log("💡 Troubleshooting tips:");
+      console.log("1. Verify EMAIL_USER and EMAIL_PASSWORD in .env");
+      console.log("2. Ensure you're using a Gmail App Password (not regular password)");
+      console.log("3. Check if 2-Factor Authentication is enabled on Gmail");
     } else {
       console.log("✅ Email service ready");
+      console.log("📧 Emails will be sent from:", process.env.EMAIL_USER);
     }
   });
 }
@@ -127,6 +137,7 @@ const emailTemplate = (content) => `
 // ========================================================
 const sendWelcomeEmail = async (user) => {
   if (!transporter) {
+    console.log("⚠️ Email transporter not configured");
     console.log("Email would be sent to:", user.email);
     return;
   }
@@ -167,7 +178,7 @@ const sendWelcomeEmail = async (user) => {
 
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to: user.email,
       subject: "Welcome to Intern Management System",
       html: emailTemplate(content),
@@ -175,6 +186,7 @@ const sendWelcomeEmail = async (user) => {
     console.log("✅ Welcome email sent to:", user.email);
   } catch (error) {
     console.error("❌ Failed to send welcome email:", error.message);
+    throw error; // ✅ Throw error so calling code knows it failed
   }
 };
 
@@ -183,6 +195,7 @@ const sendWelcomeEmail = async (user) => {
 // ========================================================
 const sendAccountCreatedEmail = async (user, temporaryPassword, createdBy) => {
   if (!transporter) {
+    console.log("⚠️ Email transporter not configured");
     console.log("Email would be sent to:", user.email);
     console.log("Temporary password:", temporaryPassword);
     return;
@@ -262,7 +275,7 @@ const sendAccountCreatedEmail = async (user, temporaryPassword, createdBy) => {
 
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to: user.email,
       subject: "Your IMS Account - Login Credentials",
       html: emailTemplate(content),
@@ -270,6 +283,7 @@ const sendAccountCreatedEmail = async (user, temporaryPassword, createdBy) => {
     console.log("✅ Account created email sent to:", user.email);
   } catch (error) {
     console.error("❌ Failed to send account created email:", error.message);
+    throw error;
   }
 };
 
@@ -278,6 +292,7 @@ const sendAccountCreatedEmail = async (user, temporaryPassword, createdBy) => {
 // ========================================================
 const sendPasswordResetEmail = async (user, temporaryPassword) => {
   if (!transporter) {
+    console.log("⚠️ Email transporter not configured");
     console.log("Email would be sent to:", user.email);
     console.log("Temporary password:", temporaryPassword);
     return;
@@ -331,7 +346,7 @@ const sendPasswordResetEmail = async (user, temporaryPassword) => {
 
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to: user.email,
       subject: "Password Reset - IMS Account",
       html: emailTemplate(content),
@@ -339,6 +354,7 @@ const sendPasswordResetEmail = async (user, temporaryPassword) => {
     console.log("✅ Password reset email sent to:", user.email);
   } catch (error) {
     console.error("❌ Failed to send password reset email:", error.message);
+    throw error;
   }
 };
 
@@ -391,7 +407,7 @@ const sendApplicationSubmittedEmail = async (user, application) => {
 
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to: user.email,
       subject: "Application Submitted - IMS",
       html: emailTemplate(content),
@@ -455,7 +471,7 @@ const sendHRReviewEmail = async (user, application, hrComments) => {
 
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to: user.email,
       subject: "Application Update - Under HOD Review",
       html: emailTemplate(content),
@@ -569,7 +585,7 @@ const sendFinalDecisionEmail = async (
 
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to: user.email,
       subject: `Application ${approved ? "Approved" : "Decision"} - IMS`,
       html: emailTemplate(content),
