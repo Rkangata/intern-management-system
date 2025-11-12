@@ -33,6 +33,10 @@ export const updateProfile = (formData) =>
 export const setUserDepartment = (department, subdepartment) =>
   API.put('/auth/set-department', { department, subdepartment });
 
+// ✅ NEW: Change Password
+export const changePassword = (currentPassword, newPassword) =>
+  API.put('/auth/change-password', { currentPassword, newPassword });
+
 // ==========================
 // DEPARTMENT APIs
 // ==========================
@@ -57,7 +61,6 @@ export const getAllApplications = (status) => {
 
 export const getApplication = (id) => API.get(`/applications/${id}`);
 
-// ✅ Updated HR review with HOD department assignment
 export const hrReviewApplication = (id, comments, hodDepartment, hodSubdepartment) =>
   API.put(`/applications/${id}/hr-review`, {
     comments,
@@ -72,6 +75,15 @@ export const updateApplication = (id, formData) =>
   API.put(`/applications/${id}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
+
+// ==========================
+// ADMIN APIs
+// ==========================
+export const getAllUsers = () => API.get('/admin/users');
+export const createUser = (userData) => API.post('/admin/create-user', userData);
+export const updateUser = (id, userData) => API.put(`/admin/users/${id}`, userData);
+export const deleteUser = (id) => API.delete(`/admin/users/${id}`);
+export const getAllApplicants = () => API.get('/admin/all-applicants');
 
 // ==========================
 // ANALYTICS APIs

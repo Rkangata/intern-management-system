@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { FaUserPlus, FaTrash, FaKey, FaCopy, FaChartLine } from 'react-icons/fa';
+import { FaUserPlus, FaTrash, FaKey, FaChartLine } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
@@ -23,7 +23,6 @@ const AdminDashboard = () => {
     department: '',
     subdepartment: '',
   });
-  const [generatedPassword, setGeneratedPassword] = useState('');
 
   useEffect(() => {
     fetchAllUsers();
@@ -77,8 +76,9 @@ const AdminDashboard = () => {
         }
       );
       
-      toast.success('User created successfully!');
-      setGeneratedPassword(response.data.temporaryPassword);
+      // ✅ Updated success message
+      toast.success(`User created! Login credentials sent to ${response.data.user.email}`);
+      
       setFormData({
         firstName: '',
         middleName: '',
@@ -93,6 +93,7 @@ const AdminDashboard = () => {
         subdepartment: '',
       });
       
+      setShowCreateForm(false);
       fetchAllUsers();
     } catch (error) {
       console.error('Error creating user:', error);
@@ -123,11 +124,11 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleResetPassword = async (userId) => {
+  const handleResetPassword = async (userId, userEmail) => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await axios.put(
+      await axios.put(
         `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/users/${userId}/reset-password`,
         {},
         {
@@ -137,16 +138,31 @@ const AdminDashboard = () => {
         }
       );
       
-      toast.success('Password reset successfully!');
-      alert(`New Password: ${response.data.newPassword}\n\nPlease copy and send to the user.`);
+      // ✅ Updated success message
+      toast.success(`Password reset email sent to ${userEmail}`);
     } catch (error) {
       toast.error('Failed to reset password');
     }
   };
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard!');
+  const handleResendCredentials = async (userId, userEmail) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      await axios.post(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/users/${userId}/resend-credentials`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        }
+      );
+      
+      toast.success(`New credentials sent to ${userEmail}`);
+    } catch (error) {
+      toast.error('Failed to resend credentials');
+    }
   };
 
   const filteredUsers =
@@ -266,10 +282,7 @@ const AdminDashboard = () => {
         {/* Create User Button */}
         <div className="mb-6">
           <button
-            onClick={() => {
-              setShowCreateForm(!showCreateForm);
-              setGeneratedPassword('');
-            }}
+            onClick={() => setShowCreateForm(!showCreateForm)}
             className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2"
           >
             <FaUserPlus />
@@ -281,25 +294,6 @@ const AdminDashboard = () => {
         {showCreateForm && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
             <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Create New User</h2>
-
-            {generatedPassword && (
-              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
-                <p className="text-green-800 dark:text-green-300 font-semibold mb-2">
-                  ✅ User Created Successfully!
-                </p>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-green-700 dark:text-green-400">
-                    <strong>Temporary Password:</strong> {generatedPassword}
-                  </p>
-                  <button
-                    onClick={() => copyToClipboard(generatedPassword)}
-                    className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
-                  >
-                    <FaCopy />
-                  </button>
-                </div>
-              </div>
-            )}
 
             <form onSubmit={handleCreateUser} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -551,10 +545,7 @@ const AdminDashboard = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowCreateForm(false);
-                    setGeneratedPassword('');
-                  }}
+                  onClick={() => setShowCreateForm(false)}
                   className="bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white px-6 py-2 rounded-lg font-semibold"
                 >
                   Cancel
@@ -640,11 +631,18 @@ const AdminDashboard = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleResetPassword(user._id)}
+                          onClick={() => handleResetPassword(user._id, user.email)}
                           className="text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-300"
                           title="Reset Password"
                         >
                           <FaKey />
+                        </button>
+                        <button
+                          onClick={() => handleResendCredentials(user._id, user.email)}
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                          title="Resend Credentials"
+                        >
+                          <FaUserPlus />
                         </button>
                         <button
                           onClick={() => handleDeleteUser(user._id)}

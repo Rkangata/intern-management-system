@@ -194,8 +194,8 @@ const Welcome = () => {
         {/* STAFF NOTE - ✅ Updated without admin email */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-3xl mx-auto mt-8 mb-20">
           <p className="text-sm text-blue-800 text-center">
-            <strong>Note for Staff:</strong> If you don't have login credentials, contact your
-            department's Human Resource Officer or system administrator.
+            <strong>Note for Staff:</strong> If you don't have login credentials, contact the
+             system administrator.
           </p>
         </div>
       </section>

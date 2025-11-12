@@ -6,6 +6,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import DepartmentSelectionModal from './components/common/DepartmentSelectionModal';
 import { FaMoon, FaSun } from 'react-icons/fa';
+import { FaLock } from 'react-icons/fa';
+import ChangePasswordModal from './components/common/ChangePasswordModal';
 
 // Pages
 import Welcome from './pages/Welcome';
@@ -75,73 +77,96 @@ const DashboardRouter = () => {
 };
 
 // ====================================================
-// 🌐 Navbar Component
+// 🌐 Navbar Component - WITH PASSWORD CHANGE BUTTON
 // ====================================================
 const Navbar = () => {
   const { user, logoutUser } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   if (!user) return null;
 
   return (
-    <nav className="bg-white dark:bg-gray-900 shadow-md transition-colors duration-300">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="Logo"
-              className="h-12 w-12 object-contain"
-              onError={(e) => {
-                e.target.src =
-                  'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%233b82f6" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="white" font-size="40" font-weight="bold">IMS</text></svg>';
-              }}
-            />
-            <div>
-              <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 leading-tight">
-                Office of the Prime Cabinet Secretary
-              </h2>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                Ministry of Foreign Affairs - Parliamentary Affairs
-              </p>
+    <>
+      <nav className="bg-white dark:bg-gray-900 shadow-md transition-colors duration-300">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo.png"
+                alt="Logo"
+                className="h-12 w-12 object-contain"
+                onError={(e) => {
+                  e.target.src =
+                    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%233b82f6" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="white" font-size="40" font-weight="bold">IMS</text></svg>';
+                }}
+              />
+              <div>
+                <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 leading-tight">
+                  Office of the Prime Cabinet Secretary
+                </h2>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Ministry of Foreign Affairs - Parliamentary Affairs
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Analytics Link - For Staff Only */}
+              {(user.role === 'hr' || user.role === 'hod' || user.role === 'admin' || user.role === 'chief_of_staff' || user.role === 'principal_secretary') && (
+                <Link
+                  to="/analytics"
+                  className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-medium text-sm"
+                >
+                  Analytics
+                </Link>
+              )}
+
+              {/* ✅ NEW: Change Password Button - For ALL Users */}
+              <button
+                onClick={() => setShowPasswordModal(true)}
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-medium text-sm flex items-center gap-1"
+              >
+                <FaLock className="text-xs" />
+                Change Password
+              </button>
+
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+              >
+                {theme === 'dark' ? (
+                  <FaSun className="text-yellow-400 text-lg" />
+                ) : (
+                  <FaMoon className="text-gray-700 text-lg" />
+                )}
+              </button>
+
+              {/* User Info */}
+              <span className="text-gray-600 dark:text-gray-300 text-sm">
+                {user.fullName} ({user.role.toUpperCase()})
+              </span>
+
+              {/* Logout Button */}
+              <button
+                onClick={logoutUser}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors text-sm"
+              >
+                Logout
+              </button>
             </div>
           </div>
-
-          <div className="flex items-center gap-6">
-            {(user.role === 'hr' || user.role === 'hod' || user.role === 'admin' || user.role === 'chief_of_staff' || user.role === 'principal_secretary') && (
-              <Link
-                to="/analytics"
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-medium"
-              >
-                Analytics
-              </Link>
-            )}
-
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-            >
-              {theme === 'dark' ? (
-                <FaSun className="text-yellow-400 text-lg" />
-              ) : (
-                <FaMoon className="text-gray-700 text-lg" />
-              )}
-            </button>
-
-            <span className="text-gray-600 dark:text-gray-300 text-sm">
-              {user.fullName} ({user.role.toUpperCase()})
-            </span>
-
-            <button
-              onClick={logoutUser}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors text-sm"
-            >
-              Logout
-            </button>
-          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* ✅ Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        userName={user.fullName}
+      />
+    </>
   );
 };
 
