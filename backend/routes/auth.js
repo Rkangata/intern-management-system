@@ -286,7 +286,7 @@ router.post('/forgot-password', async (req, res) => {
     console.log('User found:', user.email);
 
     // Generate temporary password
-    const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    const tempPassword = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     console.log('New temp password generated');
 

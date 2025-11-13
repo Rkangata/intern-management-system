@@ -41,7 +41,7 @@ router.post('/create-user', protect, authorize('admin'), async (req, res) => {
     }
 
     // Generate temporary password
-    const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    const tempPassword = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     // Prepare user data
     const userData = {
@@ -200,7 +200,7 @@ router.put('/users/:id/reset-password', protect, authorize('admin'), async (req,
     console.log('Reset by admin:', req.user.email);
 
     // Generate and hash new password
-    const newPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    const newPassword = Math.random().toString(36).substring(2, 8).toUpperCase();
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await User.updateOne(
@@ -249,7 +249,7 @@ router.post('/users/:id/resend-credentials', protect, authorize('admin'), async 
     console.log('Requested by:', req.user.email);
 
     // Generate new temporary password
-    const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    const tempPassword = Math.random().toString(36).substring(2, 8).toUpperCase();
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
     await User.updateOne(
