@@ -15,6 +15,7 @@ import {
   FaTimesCircle,
 } from "react-icons/fa";
 import { exportToExcel, exportToPDF } from "../../utils/exportUtils";
+import DocumentsSection from '../common/DocumentsSection'; // ✅ ADDED IMPORT
 
 const HODDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -476,120 +477,11 @@ const HODDashboard = () => {
                         </div>
                       </div>
 
-                      {/* Documents */}
-                      <div>
-                        <h4 className="font-semibold text-gray-800 dark:text-white mb-3">
-                          Documents
-                        </h4>
-                        <div className="space-y-2">
-                          {app.applicantRole === "intern" ? (
-                            <>
-                              {app.appointmentLetter && (
-                                <button
-                                  onClick={() =>
-                                    downloadDocument(
-                                      app.appointmentLetter,
-                                      "Appointment Letter"
-                                    )
-                                  }
-                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
-                                >
-                                  <FaDownload /> Download Appointment Letter
-                                </button>
-                              )}
-                              {app.degreeCertificate && (
-                                <button
-                                  onClick={() =>
-                                    downloadDocument(
-                                      app.degreeCertificate,
-                                      "Degree Certificate"
-                                    )
-                                  }
-                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
-                                >
-                                  <FaDownload /> Download Degree Certificate
-                                </button>
-                              )}
-                              {app.transcripts && (
-                                <button
-                                  onClick={() =>
-                                    downloadDocument(
-                                      app.transcripts,
-                                      "Transcripts"
-                                    )
-                                  }
-                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
-                                >
-                                  <FaDownload /> Download Transcripts
-                                </button>
-                              )}
-                              {app.nationalIdOrPassport && (
-                                <button
-                                  onClick={() =>
-                                    downloadDocument(
-                                      app.nationalIdOrPassport,
-                                      "National ID"
-                                    )
-                                  }
-                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
-                                >
-                                  <FaDownload /> Download National ID/Passport
-                                </button>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              {app.applicationLetter && (
-                                <button
-                                  onClick={() =>
-                                    downloadDocument(
-                                      app.applicationLetter,
-                                      "Application Letter"
-                                    )
-                                  }
-                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
-                                >
-                                  <FaDownload /> Download Application Letter
-                                </button>
-                              )}
-                              {app.cv && (
-                                <button
-                                  onClick={() => downloadDocument(app.cv, "CV")}
-                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
-                                >
-                                  <FaDownload /> Download CV
-                                </button>
-                              )}
-                              {app.attacheeTranscripts && (
-                                <button
-                                  onClick={() =>
-                                    downloadDocument(
-                                      app.attacheeTranscripts,
-                                      "Transcripts"
-                                    )
-                                  }
-                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
-                                >
-                                  <FaDownload /> Download Transcripts
-                                </button>
-                              )}
-                              {app.recommendationLetter && (
-                                <button
-                                  onClick={() =>
-                                    downloadDocument(
-                                      app.recommendationLetter,
-                                      "Recommendation Letter"
-                                    )
-                                  }
-                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
-                                >
-                                  <FaDownload /> Download Recommendation Letter
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
+                      {/* Documents - REPLACED WITH DocumentsSection */}
+                      <DocumentsSection 
+                        application={app}
+                        downloadDocument={downloadDocument}
+                      />
                     </div>
 
                     {/* HR Comments */}

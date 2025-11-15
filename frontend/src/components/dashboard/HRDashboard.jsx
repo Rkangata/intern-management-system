@@ -13,11 +13,12 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaPaperPlane,
-  FaUserPlus, // ✅ NEW: Added user plus icon
+  FaUserPlus,
 } from "react-icons/fa";
 import { exportToExcel, exportToPDF } from "../../utils/exportUtils";
 import SendOfferEmailModal from "../common/SendOfferEmailModal";
-import CreateUserModal from "../common/CreateUserModal"; // ✅ NEW IMPORT
+import CreateUserModal from "../common/CreateUserModal";
+import DocumentsSection from '../common/DocumentsSection'; // ✅ ADDED IMPORT
 
 const HRDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -35,7 +36,7 @@ const HRDashboard = () => {
   // State
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [selectedOfferApp, setSelectedOfferApp] = useState(null);
-  const [showCreateModal, setShowCreateModal] = useState(false); // ✅ NEW: Create user modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [filters, setFilters] = useState({
     status: "all",
@@ -192,7 +193,6 @@ const HRDashboard = () => {
     setExpandedApp(expandedApp === appId ? null : appId);
   };
 
-  // ✅ UPDATED: Added new status
   const getStatusBadge = (status) => {
     const colors = {
       pending:
@@ -202,7 +202,7 @@ const HRDashboard = () => {
       hod_review:
         "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
       hr_final_review:
-        "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300", // ✅ NEW
+        "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300",
       approved:
         "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
       rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
@@ -211,7 +211,7 @@ const HRDashboard = () => {
       pending: "Pending",
       hr_review: "HR Review",
       hod_review: "HOD Review",
-      hr_final_review: "Ready for Offer", // ✅ NEW
+      hr_final_review: "Ready for Offer",
       approved: "Approved",
       rejected: "Rejected",
     };
@@ -224,7 +224,6 @@ const HRDashboard = () => {
     );
   };
 
-  // ✅ UPDATED: Added new status count
   const filteredStats = {
     total: filteredApplications.length,
     pending: filteredApplications.filter((app) => app.status === "pending")
@@ -233,7 +232,7 @@ const HRDashboard = () => {
       .length,
     hrFinalReview: filteredApplications.filter(
       (app) => app.status === "hr_final_review"
-    ).length, // ✅ NEW
+    ).length,
     approved: filteredApplications.filter((app) => app.status === "approved")
       .length,
   };
@@ -257,7 +256,6 @@ const HRDashboard = () => {
         </div>
       </div>
 
-      {/* ✅ NEW: Create User Button - Added after header */}
       <div className="container mx-auto px-4 py-4">
         <button
           onClick={() => setShowCreateModal(true)}
@@ -269,7 +267,6 @@ const HRDashboard = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* ✅ UPDATED: Stats with new card */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           {[
             [
@@ -279,7 +276,7 @@ const HRDashboard = () => {
             ],
             ["Pending Review", filteredStats.pending, "text-yellow-600"],
             ["With HOD", filteredStats.hodReview, "text-purple-600"],
-            ["Ready for Offer", filteredStats.hrFinalReview, "text-indigo-600"], // ✅ NEW
+            ["Ready for Offer", filteredStats.hrFinalReview, "text-indigo-600"],
             ["Approved", filteredStats.approved, "text-green-600"],
           ].map(([label, count, color], i) => (
             <div
@@ -363,8 +360,7 @@ const HRDashboard = () => {
                   <option value="pending">Pending</option>
                   <option value="hr_review">HR Review</option>
                   <option value="hod_review">HOD Review</option>
-                  <option value="hr_final_review">Ready for Offer</option>{" "}
-                  {/* ✅ NEW */}
+                  <option value="hr_final_review">Ready for Offer</option>
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                 </select>
@@ -536,32 +532,11 @@ const HRDashboard = () => {
                         </div>
                       </div>
 
-                      {/* Documents */}
-                      <div>
-                        <h4 className="font-semibold text-gray-800 dark:text-white mb-3">
-                          Documents
-                        </h4>
-                        <div className="space-y-2">
-                          {[
-                            ["Application Letter", app.applicationLetter],
-                            ["CV/Resume", app.cv],
-                            ["National ID", app.nationalId],
-                            ["Transcripts", app.transcripts],
-                            ["Recommendation Letter", app.recommendationLetter],
-                          ].map(
-                            ([label, path]) =>
-                              path && (
-                                <button
-                                  key={label}
-                                  onClick={() => downloadDocument(path, label)}
-                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
-                                >
-                                  <FaDownload /> Download {label}
-                                </button>
-                              )
-                          )}
-                        </div>
-                      </div>
+                      {/* Documents - REPLACED WITH DocumentsSection */}
+                      <DocumentsSection 
+                        application={app}
+                        downloadDocument={downloadDocument}
+                      />
                     </div>
 
                     {/* Previous Comments */}
@@ -743,7 +718,6 @@ const HRDashboard = () => {
                       </div>
                     )}
 
-                    {/* ✅ NEW: Send Offer Email Button - Only show for hr_final_review status */}
                     {app.status === "hr_final_review" && (
                       <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
                         <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4 mb-4">
@@ -781,7 +755,6 @@ const HRDashboard = () => {
         </div>
       </div>
 
-      {/* ✅ NEW: Send Offer Email Modal */}
       <SendOfferEmailModal
         isOpen={showOfferModal}
         onClose={() => {
@@ -794,12 +767,10 @@ const HRDashboard = () => {
         }}
       />
 
-      {/* ✅ NEW: Create User Modal */}
       <CreateUserModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onUserCreated={() => {
-          // Optionally refresh list or show success
           toast.success("User account created successfully!");
         }}
       />
