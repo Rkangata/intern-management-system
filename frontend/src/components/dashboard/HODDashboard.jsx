@@ -2,7 +2,18 @@ import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { getAllApplications, hodReviewApplication } from '../../utils/api';
 import { toast } from 'react-toastify';
-import { FaSearch, FaFilter, FaTimes, FaFileExcel, FaFilePdf, FaDownload, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { 
+  FaSearch, 
+  FaFilter, 
+  FaTimes, 
+  FaFileExcel, 
+  FaFilePdf, 
+  FaDownload, 
+  FaChevronDown, 
+  FaChevronUp,
+  FaCheckCircle,
+  FaTimesCircle
+} from 'react-icons/fa';
 import { exportToExcel, exportToPDF } from '../../utils/exportUtils';
 
 const HODDashboard = () => {
@@ -27,10 +38,6 @@ const HODDashboard = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    console.log('Current HOD User:', user);
-  }, [user]);
-
-  useEffect(() => {
     fetchApplications();
   }, []);
 
@@ -41,7 +48,7 @@ const HODDashboard = () => {
   const fetchApplications = async () => {
     try {
       const { data } = await getAllApplications();
-
+      
       console.log('=== HOD DASHBOARD DEBUG ===');
       console.log('Logged in HOD:', {
         email: user.email,
@@ -49,36 +56,14 @@ const HODDashboard = () => {
         subdepartment: user.subdepartment
       });
       console.log('Total applications received:', data.length);
-      console.log('All applications:', data.map(app => ({
+      console.log('Applications:', data.map(app => ({
         id: app._id,
-        applicant: app.user?.fullName,
         dept: app.preferredDepartment,
         subdept: app.preferredSubdepartment,
         status: app.status
       })));
-
-      const myDeptApplications = data.filter(app => {
-        const deptMatch = app.preferredDepartment === user.department;
-        const subdeptMatch = app.preferredSubdepartment === user.subdepartment;
-        const match = deptMatch && subdeptMatch;
-
-        console.log(`Application ${app._id}:`, {
-          appDept: app.preferredDepartment,
-          hodDept: user.department,
-          deptMatch,
-          appSubdept: app.preferredSubdepartment,
-          hodSubdept: user.subdepartment,
-          subdeptMatch,
-          finalMatch: match
-        });
-
-        return match;
-      });
-
-      console.log('Filtered applications for this HOD:', myDeptApplications.length);
-      console.log('=== END HOD DEBUG ===');
-
-      setApplications(myDeptApplications);
+      
+      setApplications(data);
     } catch (error) {
       console.error('Fetch error:', error);
       toast.error('Failed to fetch applications');
@@ -88,33 +73,20 @@ const HODDashboard = () => {
   const applyFilters = () => {
     let filtered = [...applications];
 
-    if (filters.status !== 'all') {
-      filtered = filtered.filter(app => app.status === filters.status);
-    }
-
-    if (filters.role !== 'all') {
-      filtered = filtered.filter(app => app.user?.role === filters.role);
-    }
-
+    if (filters.status !== 'all') filtered = filtered.filter(app => app.status === filters.status);
+    if (filters.role !== 'all') filtered = filtered.filter(app => app.applicantRole === filters.role);
     if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
+      const s = filters.search.toLowerCase();
       filtered = filtered.filter(app =>
-        app.user?.fullName?.toLowerCase().includes(searchLower) ||
-        app.user?.email?.toLowerCase().includes(searchLower) ||
-        app.user?.institution?.toLowerCase().includes(searchLower)
+        app.user?.fullName?.toLowerCase().includes(s) ||
+        app.user?.email?.toLowerCase().includes(s) ||
+        app.user?.institution?.toLowerCase().includes(s)
       );
     }
-
-    if (filters.startDate) {
-      filtered = filtered.filter(app =>
-        new Date(app.createdAt) >= new Date(filters.startDate)
-      );
-    }
-    if (filters.endDate) {
-      filtered = filtered.filter(app =>
-        new Date(app.createdAt) <= new Date(filters.endDate)
-      );
-    }
+    if (filters.startDate)
+      filtered = filtered.filter(app => new Date(app.createdAt) >= new Date(filters.startDate));
+    if (filters.endDate)
+      filtered = filtered.filter(app => new Date(app.createdAt) <= new Date(filters.endDate));
 
     filtered.sort((a, b) => {
       let aValue, bValue;
@@ -127,21 +99,17 @@ const HODDashboard = () => {
           aValue = new Date(a.createdAt);
           bValue = new Date(b.createdAt);
       }
-
-      if (filters.sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      }
-      return aValue < bValue ? 1 : -1;
+      return filters.sortOrder === 'asc'
+        ? aValue > bValue ? 1 : -1
+        : aValue < bValue ? 1 : -1;
     });
 
     setFilteredApplications(filtered);
   };
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
+  const handleFilterChange = (key, value) => setFilters(prev => ({ ...prev, [key]: value }));
 
-  const clearFilters = () => {
+  const clearFilters = () =>
     setFilters({
       status: 'all',
       role: 'all',
@@ -151,7 +119,6 @@ const HODDashboard = () => {
       sortBy: 'createdAt',
       sortOrder: 'desc'
     });
-  };
 
   const handleReview = async (appId, action) => {
     if (!comments.trim()) {
@@ -183,17 +150,15 @@ const HODDashboard = () => {
 
   const toggleExpand = (appId) => {
     setExpandedApp(expandedApp === appId ? null : appId);
-    if (selectedApp === appId) {
-      setSelectedApp(null);
-      setComments('');
-    }
   };
 
+  // ✅ UPDATED: Added hr_final_review status
   const getStatusBadge = (status) => {
     const statusColors = {
       pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
       hr_review: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
       hod_review: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+      hr_final_review: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
       approved: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
       rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
     };
@@ -202,6 +167,7 @@ const HODDashboard = () => {
       pending: 'Pending',
       hr_review: 'HR Review',
       hod_review: 'For My Review',
+      hr_final_review: 'With HR for Offer',
       approved: 'Approved',
       rejected: 'Rejected',
     };
@@ -215,58 +181,45 @@ const HODDashboard = () => {
 
   const filteredStats = {
     total: filteredApplications.length,
-    pending: filteredApplications.filter(app => app.status === 'pending' || app.status === 'hr_review').length,
-    hodReview: filteredApplications.filter(app => app.status === 'hod_review').length,
-    approved: filteredApplications.filter(app => app.status === 'approved').length,
+    pending: filteredApplications.filter(app => app.status === 'hod_review').length,
+    approved: filteredApplications.filter(app => app.status === 'approved' || app.status === 'hr_final_review').length,
     rejected: filteredApplications.filter(app => app.status === 'rejected').length,
   };
 
-  const activeFiltersCount = Object.entries(filters).filter(([key, value]) => {
-    if (key === 'sortBy' || key === 'sortOrder') return false;
-    if (key === 'status' && value === 'all') return false;
-    if (key === 'role' && value === 'all') return false;
-    return value !== '' && value !== 'all';
+  const activeFiltersCount = Object.entries(filters).filter(([key, val]) => {
+    if (['sortBy', 'sortOrder'].includes(key)) return false;
+    if (['status', 'role'].includes(key) && val === 'all') return false;
+    return val !== '' && val !== 'all';
   }).length;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="bg-white dark:bg-gray-800 shadow">
         <div className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-            Head of Department Dashboard
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">HOD Dashboard</h1>
           <p className="text-gray-600 dark:text-gray-300 mt-1">
-            {user.department} - {user.subdepartment}
+            Review applications for {user.department} - {user.subdepartment}
           </p>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <p className="text-gray-600 dark:text-gray-300 text-sm">Total Applications</p>
-            <p className="text-3xl font-bold text-gray-800 dark:text-white mt-2">{filteredStats.total}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <p className="text-gray-600 dark:text-gray-300 text-sm">Pending</p>
-            <p className="text-3xl font-bold text-yellow-600 mt-2">{filteredStats.pending}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <p className="text-gray-600 dark:text-gray-300 text-sm">For Review</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">{filteredStats.hodReview}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <p className="text-gray-600 dark:text-gray-300 text-sm">Approved</p>
-            <p className="text-3xl font-bold text-green-600 mt-2">{filteredStats.approved}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <p className="text-gray-600 dark:text-gray-300 text-sm">Rejected</p>
-            <p className="text-3xl font-bold text-red-600 mt-2">{filteredStats.rejected}</p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {[
+            ['Total Applications', filteredStats.total, 'text-gray-800 dark:text-white'],
+            ['Pending Review', filteredStats.pending, 'text-purple-600'],
+            ['Approved', filteredStats.approved, 'text-green-600'],
+            ['Rejected', filteredStats.rejected, 'text-red-600'],
+          ].map(([label, count, color], i) => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <p className="text-gray-600 dark:text-gray-300 text-sm">{label}</p>
+              <p className={`text-3xl font-bold mt-2 ${color}`}>{count}</p>
+            </div>
+          ))}
         </div>
 
-        {/* Search and Filter Bar */}
+        {/* Search & Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
@@ -294,7 +247,6 @@ const HODDashboard = () => {
             >
               <FaFilePdf /> PDF
             </button>
-
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
@@ -306,7 +258,6 @@ const HODDashboard = () => {
                 </span>
               )}
             </button>
-
             {activeFiltersCount > 0 && (
               <button
                 onClick={clearFilters}
@@ -317,6 +268,7 @@ const HODDashboard = () => {
             )}
           </div>
 
+          {/* Advanced Filters Panel */}
           {showFilters && (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -326,8 +278,9 @@ const HODDashboard = () => {
                   onChange={(e) => handleFilterChange('status', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                 >
-                  <option value="all">All Status</option>
-                  <option value="hod_review">For My Review</option>
+                  <option value="all">All Statuses</option>
+                  <option value="hod_review">Pending My Review</option>
+                  <option value="hr_final_review">With HR for Offer</option>
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                 </select>
@@ -347,26 +300,6 @@ const HODDashboard = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">From Date</label>
-                <input
-                  type="date"
-                  value={filters.startDate}
-                  onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">To Date</label>
-                <input
-                  type="date"
-                  value={filters.endDate}
-                  onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-
-              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</label>
                 <div className="flex gap-2">
                   <select
@@ -374,7 +307,7 @@ const HODDashboard = () => {
                     onChange={(e) => handleFilterChange('sortBy', e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                   >
-                    <option value="createdAt">Date Submitted</option>
+                    <option value="createdAt">Date</option>
                     <option value="name">Name</option>
                   </select>
                   <select
@@ -395,21 +328,15 @@ const HODDashboard = () => {
         <div className="space-y-4">
           {filteredApplications.length === 0 ? (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
-              <p className="text-gray-600 dark:text-gray-400 text-lg">
-                {applications.length === 0 ? 'No applications for your department yet' : 'No applications match your filters'}
+              <p className="text-gray-500 dark:text-gray-400 text-lg">No applications found for your department</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+                Department: {user.department} | Subdepartment: {user.subdepartment}
               </p>
-              {activeFiltersCount > 0 && (
-                <button
-                  onClick={clearFilters}
-                  className="mt-4 text-blue-500 hover:text-blue-600 font-semibold"
-                >
-                  Clear all filters
-                </button>
-              )}
             </div>
           ) : (
             filteredApplications.map((app) => (
               <div key={app._id} className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                {/* Application Header */}
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
@@ -420,22 +347,22 @@ const HODDashboard = () => {
                         {app.user?.email} | {app.user?.phoneNumber}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                        <span className="font-medium">Institution:</span> {app.user?.institution} |
-                        <span className="font-medium ml-2">Course:</span> {app.user?.course} |
-                        <span className="font-medium ml-2">Year:</span> {app.user?.yearOfStudy}
+                        <span className="font-medium">Institution:</span> {app.user?.institution} | 
+                        <span className="font-medium ml-2">Course:</span> {app.user?.course}
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
                       {getStatusBadge(app.status)}
-                      <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                        {app.user?.role?.toUpperCase()}
+                      <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full capitalize">
+                        {app.applicantRole}
                       </span>
                     </div>
                   </div>
 
+                  {/* Expand/Collapse Button */}
                   <button
                     onClick={() => toggleExpand(app._id)}
-                    className="flex items-center gap-2 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
+                    className="flex items-center gap-2 text-blue-500 hover:text-blue-600 font-medium transition-colors"
                   >
                     {expandedApp === app._id ? (
                       <>
@@ -449,8 +376,10 @@ const HODDashboard = () => {
                   </button>
                 </div>
 
+                {/* Expanded Details */}
                 {expandedApp === app._id && (
                   <div className="border-t border-gray-200 dark:border-gray-700 p-6 bg-gray-50 dark:bg-gray-900">
+                    {/* Application Details */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                       <div>
                         <h4 className="font-semibold text-gray-800 dark:text-white mb-3">Application Information</h4>
@@ -459,7 +388,7 @@ const HODDashboard = () => {
                             <span className="font-medium">Department:</span> {app.preferredDepartment}
                           </p>
                           <p className="text-gray-600 dark:text-gray-300">
-                            <span className="font-medium">Subdepartment:</span> {app.preferredSubdepartment || 'N/A'}
+                            <span className="font-medium">Subdepartment:</span> {app.preferredSubdepartment}
                           </p>
                           <p className="text-gray-600 dark:text-gray-300">
                             <span className="font-medium">Start Date:</span> {new Date(app.startDate).toLocaleDateString()}
@@ -473,77 +402,129 @@ const HODDashboard = () => {
                         </div>
                       </div>
 
+                      {/* Documents */}
                       <div>
                         <h4 className="font-semibold text-gray-800 dark:text-white mb-3">Documents</h4>
                         <div className="space-y-2">
-                          {[
-                            ['Application Letter', app.applicationLetter],
-                            ['CV/Resume', app.cv],
-                            ['National ID', app.nationalId],
-                            ['Transcripts', app.transcripts],
-                            ['Recommendation Letter', app.recommendationLetter],
-                          ].map(([label, path]) => path && (
-                            <button
-                              key={label}
-                              onClick={() => downloadDocument(path, label)}
-                              className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
-                            >
-                              <FaDownload /> Download {label}
-                            </button>
-                          ))}
+                          {app.applicantRole === 'intern' ? (
+                            <>
+                              {app.appointmentLetter && (
+                                <button
+                                  onClick={() => downloadDocument(app.appointmentLetter, 'Appointment Letter')}
+                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+                                >
+                                  <FaDownload /> Download Appointment Letter
+                                </button>
+                              )}
+                              {app.degreeCertificate && (
+                                <button
+                                  onClick={() => downloadDocument(app.degreeCertificate, 'Degree Certificate')}
+                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+                                >
+                                  <FaDownload /> Download Degree Certificate
+                                </button>
+                              )}
+                              {app.transcripts && (
+                                <button
+                                  onClick={() => downloadDocument(app.transcripts, 'Transcripts')}
+                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+                                >
+                                  <FaDownload /> Download Transcripts
+                                </button>
+                              )}
+                              {app.nationalIdOrPassport && (
+                                <button
+                                  onClick={() => downloadDocument(app.nationalIdOrPassport, 'National ID')}
+                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+                                >
+                                  <FaDownload /> Download National ID/Passport
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {app.applicationLetter && (
+                                <button
+                                  onClick={() => downloadDocument(app.applicationLetter, 'Application Letter')}
+                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+                                >
+                                  <FaDownload /> Download Application Letter
+                                </button>
+                              )}
+                              {app.cv && (
+                                <button
+                                  onClick={() => downloadDocument(app.cv, 'CV')}
+                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+                                >
+                                  <FaDownload /> Download CV
+                                </button>
+                              )}
+                              {app.attacheeTranscripts && (
+                                <button
+                                  onClick={() => downloadDocument(app.attacheeTranscripts, 'Transcripts')}
+                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+                                >
+                                  <FaDownload /> Download Transcripts
+                                </button>
+                              )}
+                              {app.recommendationLetter && (
+                                <button
+                                  onClick={() => downloadDocument(app.recommendationLetter, 'Recommendation Letter')}
+                                  className="flex items-center gap-2 w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+                                >
+                                  <FaDownload /> Download Recommendation Letter
+                                </button>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
 
+                    {/* HR Comments */}
                     {app.hrComments && (
                       <div className="mb-6">
+                        <h4 className="font-semibold text-gray-800 dark:text-white mb-3">HR Comments</h4>
                         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                          <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">HR Comments:</p>
                           <p className="text-sm text-gray-700 dark:text-gray-300">{app.hrComments}</p>
                         </div>
                       </div>
                     )}
 
-                    {app.hodComments && (
-                      <div className="mb-6">
-                        <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-                          <p className="text-sm font-medium text-purple-800 dark:text-purple-300 mb-1">My Previous Decision:</p>
-                          <p className="text-sm text-gray-700 dark:text-gray-300">{app.hodComments}</p>
-                        </div>
-                      </div>
-                    )}
-
+                    {/* Review Actions - Only for hod_review status */}
                     {app.status === 'hod_review' && (
                       <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                         {selectedApp === app._id ? (
                           <div>
                             <h4 className="font-semibold text-gray-800 dark:text-white mb-4">Make Your Decision</h4>
-
+                            
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                              Decision Comments (Required)
+                              Add Your Comments (Required)
                             </label>
                             <textarea
                               value={comments}
                               onChange={(e) => setComments(e.target.value)}
                               rows="4"
                               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                              placeholder="Enter your decision and feedback for the applicant..."
+                              placeholder="Enter your review comments..."
                             />
-
+                            
                             <div className="flex gap-3 mt-4">
                               <button
                                 onClick={() => handleReview(app._id, 'approve')}
                                 disabled={loading}
-                                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                {loading ? 'Processing...' : '✓ Approve Application'}
+                                <FaCheckCircle />
+                                {loading ? 'Processing...' : 'Approve Application'}
                               </button>
                               <button
                                 onClick={() => handleReview(app._id, 'reject')}
                                 disabled={loading}
-                                className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                {loading ? 'Processing...' : '✗ Reject Application'}
+                                <FaTimesCircle />
+                                {loading ? 'Processing...' : 'Reject Application'}
                               </button>
                               <button
                                 onClick={() => {
@@ -559,11 +540,35 @@ const HODDashboard = () => {
                         ) : (
                           <button
                             onClick={() => setSelectedApp(app._id)}
-                            className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
                           >
                             Review & Make Decision
                           </button>
                         )}
+                      </div>
+                    )}
+
+                    {/* Show status message for other statuses */}
+                    {app.status === 'hr_final_review' && (
+                      <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg p-4">
+                        <p className="text-sm text-indigo-800 dark:text-indigo-300">
+                          ✅ You approved this application. It's now with HR for sending the final offer email.
+                        </p>
+                      </div>
+                    )}
+
+                    {app.status === 'approved' && (
+                      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
+                        <p className="text-sm text-green-800 dark:text-green-300">
+                          ✅ Application fully approved. Offer email sent to applicant.
+                        </p>
+                      </div>
+                    )}
+
+                    {app.status === 'rejected' && app.hodComments && (
+                      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
+                        <p className="text-sm font-medium text-red-800 dark:text-red-300 mb-1">Your Decision Comments:</p>
+                        <p className="text-sm text-red-700 dark:text-red-400">{app.hodComments}</p>
                       </div>
                     )}
                   </div>
@@ -577,4 +582,4 @@ const HODDashboard = () => {
   );
 };
 
-export default HODDashboard; 
+export default HODDashboard;
