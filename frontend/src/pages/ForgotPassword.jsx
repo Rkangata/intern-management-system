@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { FaEnvelope, FaArrowLeft, FaCheckCircle } from 'react-icons/fa';
-import API from '../utils/api'; // ✅ Use the configured API instance
+import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import { FaEnvelope, FaArrowLeft, FaCheckCircle } from "react-icons/fa";
+import API from "../utils/api"; // ✅ Use the configured API instance
 
 const ForgotPassword = () => {
   const { role } = useParams();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [resetComplete, setResetComplete] = useState(false);
 
@@ -16,15 +16,20 @@ const ForgotPassword = () => {
 
     try {
       // ✅ FIXED: Use API instance which has correct baseURL
-      const response = await API.post('/auth/forgot-password', { email });
-      
-      console.log('Password reset response:', response.data);
-      
+      const response = await API.post("/auth/forgot-password", { email });
+
+      console.log("Password reset response:", response.data);
+
       setResetComplete(true);
-      toast.success(response.data.message || 'Password reset email sent! Please check your inbox.');
+      toast.success(
+        response.data.message ||
+          "Password reset email sent! Please check your inbox."
+      );
     } catch (error) {
-      console.error('Password reset error:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to reset password. Please try again.';
+      console.error("Password reset error:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to reset password. Please try again.";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -69,13 +74,13 @@ const ForgotPassword = () => {
                   disabled={loading}
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Sending Reset Email...' : 'Send Reset Email'}
+                  {loading ? "Sending Reset Email..." : "Send Reset Email"}
                 </button>
               </form>
 
               <div className="mt-6 text-center">
                 <Link
-                  to={role ? `/login/${role}` : '/'}
+                  to={role ? `/login/${role}` : "/"}
                   className="text-blue-500 hover:text-blue-600 dark:text-blue-400 font-semibold flex items-center justify-center gap-2"
                 >
                   <FaArrowLeft />
@@ -103,33 +108,35 @@ const ForgotPassword = () => {
                     📧 Email Sent Successfully
                   </p>
                   <p className="text-blue-700 dark:text-blue-400 text-sm">
-                    We've sent a temporary password to <strong>{email}</strong>. 
-                    Please check your inbox (and spam folder) and use the temporary password to log in.
+                    We've sent a temporary password to <strong>{email}</strong>.
+                    Please check your inbox (and spam folder) and use the
+                    temporary password to log in.
                   </p>
                 </div>
               </div>
 
               <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-6">
                 <p className="text-yellow-800 dark:text-yellow-300 text-sm">
-                  <strong>⚠️ Important:</strong> After logging in with your temporary password, 
-                  please change it immediately in your profile settings for security.
+                  <strong>⚠️ Important:</strong> After logging in with your
+                  temporary password, please change it immediately in your
+                  profile settings for security.
                 </p>
               </div>
 
               <div className="space-y-4">
                 <Link
-                  to={role ? `/login/${role}` : '/'}
+                  to={role ? `/login/${role}` : "/"}
                   className="block w-full bg-blue-500 hover:bg-blue-600 text-white text-center py-3 rounded-lg font-semibold transition-colors"
                 >
                   Return to Login
                 </Link>
-                
+
                 <div className="text-center text-sm text-gray-600 dark:text-gray-400">
                   <p>Didn't receive the email?</p>
                   <button
                     onClick={() => {
                       setResetComplete(false);
-                      setEmail('');
+                      setEmail("");
                     }}
                     className="text-blue-500 hover:text-blue-600 dark:text-blue-400 font-semibold mt-1"
                   >

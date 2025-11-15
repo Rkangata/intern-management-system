@@ -11,14 +11,14 @@ const createTransporter = () => {
   }
 
   return nodemailer.createTransport({
-    service: 'gmail', // ✅ FIX 1: Use 'service' instead of manual host/port
+    service: "gmail", // ✅ FIX 1: Use 'service' instead of manual host/port
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
     // ✅ FIX 2: Add these security options
     tls: {
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
     },
     // ✅ FIX 3: Increase timeout
     connectionTimeout: 10000, // 10 seconds
@@ -34,7 +34,9 @@ if (transporter) {
       console.error("❌ Email service error:", error.message);
       console.log("💡 Troubleshooting tips:");
       console.log("1. Verify EMAIL_USER and EMAIL_PASSWORD in .env");
-      console.log("2. Ensure you're using a Gmail App Password (not regular password)");
+      console.log(
+        "2. Ensure you're using a Gmail App Password (not regular password)"
+      );
       console.log("3. Check if 2-Factor Authentication is enabled on Gmail");
     } else {
       console.log("✅ Email service ready");
@@ -601,6 +603,183 @@ const sendFinalDecisionEmail = async (
 };
 
 // ========================================================
+// 📧 NEW: SEND HOD APPROVAL TO HR EMAIL
+// ========================================================
+const sendHODApprovalToHREmail = async (
+  hrUser,
+  application,
+  applicant,
+  hodComments
+) => {
+  if (!transporter) return;
+
+  const content = `
+    <div class="header">
+      <h1>✅ HOD Approved Application</h1>
+    </div>
+    <div class="content">
+      <h2>Hello ${hrUser.fullName}!</h2>
+      <p>A <strong>${
+        application.applicantRole
+      }</strong> application has been <strong>approved by the HOD</strong> and is now ready for your final review and offer email.</p>
+      
+      <h3>📋 Application Details</h3>
+      <ul>
+        <li><strong>Applicant:</strong> ${applicant.fullName}</li>
+        <li><strong>Email:</strong> ${applicant.email}</li>
+        <li><strong>Role:</strong> ${application.applicantRole}</li>
+        <li><strong>Department:</strong> ${application.preferredDepartment}</li>
+        <li><strong>Subdepartment:</strong> ${
+          application.preferredSubdepartment
+        }</li>
+        <li><strong>Start Date:</strong> ${new Date(
+          application.startDate
+        ).toLocaleDateString()}</li>
+        <li><strong>End Date:</strong> ${new Date(
+          application.endDate
+        ).toLocaleDateString()}</li>
+      </ul>
+      
+      ${
+        hodComments
+          ? `
+        <div style="background: #f3f4f6; border-left: 4px solid #6b7280; padding: 15px; margin: 20px 0; border-radius: 4px;">
+          <strong>HOD Comments:</strong><br>
+          <p style="margin: 10px 0 0 0;">${hodComments}</p>
+        </div>
+      `
+          : ""
+      }
+      
+      <div class="warning">
+        <strong>⚠️ Action Required:</strong><br>
+        Please log in to the system to send the final offer email to the applicant.
+      </div>
+      
+      <a href="${
+        process.env.FRONTEND_URL || "http://localhost:5173"
+      }/dashboard" class="button">
+        Review & Send Offer Email
+      </a>
+      
+      <p>Best regards,<br>
+      <strong>IMS System</strong></p>
+    </div>
+    <div class="footer">
+      <p>This is an automated message. Please do not reply to this email.</p>
+    </div>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      to: hrUser.email,
+      subject: "HOD Approved Application - Send Offer Email",
+      html: emailTemplate(content),
+    });
+    console.log("✅ HOD approval notification sent to HR:", hrUser.email);
+  } catch (error) {
+    console.error("❌ Failed to send HOD approval to HR email:", error.message);
+  }
+};
+
+// ========================================================
+// 📧 NEW: SEND OFFER EMAIL (Custom HR Message)
+// ========================================================
+const sendOfferEmail = async (user, application, customMessage) => {
+  if (!transporter) return;
+
+  const content = `
+    <div class="header">
+      <h1>🎉 Congratulations! Your Application Has Been Approved</h1>
+    </div>
+    <div class="content">
+      <h2>Dear ${user.fullName},</h2>
+      
+      <p>We are pleased to inform you that your application for <strong>${
+        application.applicantRole === "intern" ? "Internship" : "Attachment"
+      }</strong> has been <strong>approved</strong>!</p>
+      
+      <div style="background: #dcfce7; border-left: 4px solid #16a34a; padding: 20px; margin: 20px 0; border-radius: 4px; text-align: center;">
+        <h2 style="margin: 0; color: #16a34a;">
+          ✅ APPLICATION APPROVED
+        </h2>
+      </div>
+      
+      <h3>📋 Your Placement Details</h3>
+      <div class="info-box">
+        <p><strong>Department:</strong> ${application.preferredDepartment}</p>
+        <p><strong>Subdepartment:</strong> ${
+          application.preferredSubdepartment || "N/A"
+        }</p>
+        <p><strong>Start Date:</strong> ${new Date(
+          application.startDate
+        ).toLocaleDateString()}</p>
+        <p><strong>End Date:</strong> ${new Date(
+          application.endDate
+        ).toLocaleDateString()}</p>
+        <p><strong>Role:</strong> ${
+          application.applicantRole === "intern" ? "Intern" : "Attachee"
+        }</p>
+      </div>
+      
+      <h3>💬 Message from HR Department</h3>
+      <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 0; white-space: pre-wrap;">${customMessage}</p>
+      </div>
+      
+      <h3>📅 Next Steps</h3>
+      <ol style="line-height: 2;">
+        <li>Confirm your attendance by replying to this email</li>
+        <li>Prepare all required documents for your first day</li>
+        <li>Report to the HR office on your start date</li>
+        <li>Complete orientation and onboarding process</li>
+      </ol>
+      
+      <div class="warning">
+        <strong>⚠️ Important Reminders:</strong>
+        <ul style="margin: 10px 0 0 0;">
+          <li>Report on time on your first day</li>
+          <li>Bring all original documents for verification</li>
+          <li>Dress professionally and maintain workplace standards</li>
+          <li>Contact HR if you have any questions or concerns</li>
+        </ul>
+      </div>
+      
+      <a href="${
+        process.env.FRONTEND_URL || "http://localhost:5173"
+      }/dashboard" class="button">
+        View Your Dashboard
+      </a>
+      
+      <p>We look forward to working with you and wish you a successful ${
+        application.applicantRole === "intern" ? "internship" : "attachment"
+      } experience!</p>
+      
+      <p>Best regards,<br>
+      <strong>Human Resources Department</strong><br>
+      Office of the Prime Cabinet Secretary</p>
+    </div>
+    <div class="footer">
+      <p>This is an automated message. Please do not reply to this email.</p>
+      <p>For inquiries, please contact the HR department directly.</p>
+    </div>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      to: user.email,
+      subject: "Congratulations! Your Application Has Been Approved - IMS",
+      html: emailTemplate(content),
+    });
+    console.log(`✅ Offer email sent to: ${user.email}`);
+  } catch (error) {
+    console.error("❌ Failed to send offer email:", error.message);
+  }
+};
+
+// ========================================================
 // 📧 EXPORTS
 // ========================================================
 module.exports = {
@@ -610,4 +789,6 @@ module.exports = {
   sendApplicationSubmittedEmail,
   sendHRReviewEmail,
   sendFinalDecisionEmail,
+  sendHODApprovalToHREmail, // ✅ NEW
+  sendOfferEmail, // ✅ NEW
 };

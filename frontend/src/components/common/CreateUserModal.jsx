@@ -1,88 +1,93 @@
-import { useState } from 'react';
-import { FaTimes, FaUserPlus, FaSpinner } from 'react-icons/fa';
-import { toast } from 'react-toastify';
-import API from '../../utils/api';
+import { useState } from "react";
+import { FaTimes, FaUserPlus, FaSpinner } from "react-icons/fa";
+import { toast } from "react-toastify";
+import API from "../../utils/api";
 
 const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    email: '',
-    phoneNumber: '',
-    role: 'intern',
-    institution: '',
-    course: '',
-    yearOfStudy: '',
-    department: '',
-    subdepartment: ''
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    email: "",
+    phoneNumber: "",
+    role: "intern",
+    institution: "",
+    course: "",
+    yearOfStudy: "",
+    department: "",
+    subdepartment: "",
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
       // Reset subdepartment when department changes
-      ...(name === 'department' && { subdepartment: '' })
+      ...(name === "department" && { subdepartment: "" }),
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phoneNumber) {
-      toast.error('Please fill in all required fields');
+    if (
+      !formData.firstName ||
+      !formData.lastName ||
+      !formData.email ||
+      !formData.phoneNumber
+    ) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
     if (!formData.institution || !formData.course || !formData.yearOfStudy) {
-      toast.error('Please fill in institution details');
+      toast.error("Please fill in institution details");
       return;
     }
 
     if (!formData.department || !formData.subdepartment) {
-      toast.error('Please select department and subdepartment');
+      toast.error("Please select department and subdepartment");
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await API.post('/hr/create-user', formData);
-      
+      const response = await API.post("/hr/create-user", formData);
+
       toast.success(response.data.message);
-      
+
       // Show temp password in development
       if (response.data.temporaryPassword) {
         toast.info(`Temporary Password: ${response.data.temporaryPassword}`, {
-          autoClose: 10000
+          autoClose: 10000,
         });
       }
-      
+
       // Reset form
       setFormData({
-        firstName: '',
-        middleName: '',
-        lastName: '',
-        email: '',
-        phoneNumber: '',
-        role: 'intern',
-        institution: '',
-        course: '',
-        yearOfStudy: '',
-        department: '',
-        subdepartment: ''
+        firstName: "",
+        middleName: "",
+        lastName: "",
+        email: "",
+        phoneNumber: "",
+        role: "intern",
+        institution: "",
+        course: "",
+        yearOfStudy: "",
+        department: "",
+        subdepartment: "",
       });
-      
+
       // Notify parent and close
       onUserCreated();
       onClose();
     } catch (error) {
-      console.error('Create user error:', error);
-      toast.error(error.response?.data?.message || 'Failed to create user');
+      console.error("Create user error:", error);
+      toast.error(error.response?.data?.message || "Failed to create user");
     } finally {
       setLoading(false);
     }
@@ -115,12 +120,17 @@ const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 max-h-[70vh] overflow-y-auto">
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 max-h-[70vh] overflow-y-auto"
+        >
           {/* Info Message */}
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
             <p className="text-sm text-blue-800 dark:text-blue-300">
-              📧 <strong>Credentials will be sent via email.</strong> The user will receive a temporary password 
-              and must change it on first login. They will NOT see a registration button on the landing page.
+              📧 <strong>Credentials will be sent via email.</strong> The user
+              will receive a temporary password and must change it on first
+              login. They will NOT see a registration button on the landing
+              page.
             </p>
           </div>
 
@@ -130,15 +140,17 @@ const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
               User Type <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-2 gap-4">
-              {['intern', 'attachee'].map((type) => (
+              {["intern", "attachee"].map((type) => (
                 <button
                   key={type}
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, role: type }))}
+                  onClick={() =>
+                    setFormData((prev) => ({ ...prev, role: type }))
+                  }
                   className={`p-4 border-2 rounded-lg font-semibold transition-all ${
                     formData.role === type
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
-                      : 'border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-700 text-gray-700 dark:text-gray-300'
+                      ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300"
+                      : "border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-700 text-gray-700 dark:text-gray-300"
                   }`}
                 >
                   {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -306,8 +318,12 @@ const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
                   required
                 >
                   <option value="">Select Department</option>
-                  <option value="OPCS">Office of the Prime Cabinet Secretary</option>
-                  <option value="SDPA">State Department for Parliamentary Affairs</option>
+                  <option value="OPCS">
+                    Office of the Prime Cabinet Secretary
+                  </option>
+                  <option value="SDPA">
+                    State Department for Parliamentary Affairs
+                  </option>
                 </select>
               </div>
               <div>
@@ -323,9 +339,11 @@ const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
                   disabled={!formData.department}
                 >
                   <option value="">
-                    {formData.department ? 'Select Subdepartment' : 'Select Department First'}
+                    {formData.department
+                      ? "Select Subdepartment"
+                      : "Select Department First"}
                   </option>
-                  {formData.department === 'SDPA' && (
+                  {formData.department === "SDPA" && (
                     <>
                       <option value="ADMIN">Administration</option>
                       <option value="CPPMD">CPPMD</option>
@@ -333,11 +351,13 @@ const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
                       <option value="FINANCE">Finance Unit</option>
                       <option value="ACCOUNTS">Accounts Unit</option>
                       <option value="SCM">SCM Unit</option>
-                      <option value="PUBLIC_COMM">Public Communications Unit</option>
+                      <option value="PUBLIC_COMM">
+                        Public Communications Unit
+                      </option>
                       <option value="ICT">ICT Unit</option>
                     </>
                   )}
-                  {formData.department === 'OPCS' && (
+                  {formData.department === "OPCS" && (
                     <>
                       <option value="ADMIN">Administration</option>
                       <option value="POLICY">Policy & Planning</option>

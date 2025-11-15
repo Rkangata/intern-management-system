@@ -1,41 +1,41 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
-const DepartmentSelector = ({ 
-  selectedDepartment, 
-  selectedSubdepartment, 
-  onDepartmentChange, 
+const DepartmentSelector = ({
+  selectedDepartment,
+  selectedSubdepartment,
+  onDepartmentChange,
   onSubdepartmentChange,
   required = false,
-  disabled = false 
+  disabled = false,
 }) => {
   const departments = [
-    { code: 'OPCS', name: 'Office of the Prime Cabinet Secretary' },
-    { code: 'SDPA', name: 'State Department for Parliamentary Affairs' }
+    { code: "OPCS", name: "Office of the Prime Cabinet Secretary" },
+    { code: "SDPA", name: "State Department for Parliamentary Affairs" },
   ];
 
   const subdepartments = {
     SDPA: [
-      { code: 'ADMIN', name: 'Administration' },
-      { code: 'CPPMD', name: 'CPPMD' },
-      { code: 'HRMD', name: 'HRM&D Division' },
-      { code: 'FINANCE', name: 'Finance Unit' },
-      { code: 'ACCOUNTS', name: 'Accounts Unit' },
-      { code: 'SCM', name: 'SCM Unit' },
-      { code: 'PUBLIC_COMM', name: 'Public Communications Unit' },
-      { code: 'ICT', name: 'ICT Unit' }
+      { code: "ADMIN", name: "Administration" },
+      { code: "CPPMD", name: "CPPMD" },
+      { code: "HRMD", name: "HRM&D Division" },
+      { code: "FINANCE", name: "Finance Unit" },
+      { code: "ACCOUNTS", name: "Accounts Unit" },
+      { code: "SCM", name: "SCM Unit" },
+      { code: "PUBLIC_COMM", name: "Public Communications Unit" },
+      { code: "ICT", name: "ICT Unit" },
     ],
     OPCS: [
-      { code: 'ADMIN', name: 'Administration' },
-      { code: 'POLICY', name: 'Policy & Planning' },
-      { code: 'COORDINATION', name: 'Coordination' },
-      { code: 'CPPMD', name: 'CPPMD' },
-      { code: 'HRMD', name: 'HRM&D Division' },
-      { code: 'FINANCE', name: 'Finance Unit' },
-      { code: 'ACCOUNTS', name: 'Accounts Unit' },
-      { code: 'SCM', name: 'SCM Unit' },
-      { code: 'PUBLIC_COMM', name: 'Public Communications Unit' },
-      { code: 'ICT', name: 'ICT Unit' }
-    ]
+      { code: "ADMIN", name: "Administration" },
+      { code: "POLICY", name: "Policy & Planning" },
+      { code: "COORDINATION", name: "Coordination" },
+      { code: "CPPMD", name: "CPPMD" },
+      { code: "HRMD", name: "HRM&D Division" },
+      { code: "FINANCE", name: "Finance Unit" },
+      { code: "ACCOUNTS", name: "Accounts Unit" },
+      { code: "SCM", name: "SCM Unit" },
+      { code: "PUBLIC_COMM", name: "Public Communications Unit" },
+      { code: "ICT", name: "ICT Unit" },
+    ],
   };
 
   const handleDepartmentChange = (e) => {
@@ -43,11 +43,13 @@ const DepartmentSelector = ({
     onDepartmentChange(value);
     // Reset subdepartment when department changes
     if (onSubdepartmentChange) {
-      onSubdepartmentChange('');
+      onSubdepartmentChange("");
     }
   };
 
-  const currentSubdepts = selectedDepartment ? (subdepartments[selectedDepartment] || []) : [];
+  const currentSubdepts = selectedDepartment
+    ? subdepartments[selectedDepartment] || []
+    : [];
 
   return (
     <div className="space-y-4">

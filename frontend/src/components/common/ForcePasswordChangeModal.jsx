@@ -1,12 +1,18 @@
-import { useState } from 'react';
-import { FaLock, FaEye, FaEyeSlash, FaTimes, FaExclamationTriangle } from 'react-icons/fa';
-import { toast } from 'react-toastify';
-import API from '../../utils/api';
+import { useState } from "react";
+import {
+  FaLock,
+  FaEye,
+  FaEyeSlash,
+  FaTimes,
+  FaExclamationTriangle,
+} from "react-icons/fa";
+import { toast } from "react-toastify";
+import API from "../../utils/api";
 
 const ForcePasswordChangeModal = ({ isOpen, onPasswordChanged, userEmail }) => {
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -14,22 +20,22 @@ const ForcePasswordChangeModal = ({ isOpen, onPasswordChanged, userEmail }) => {
 
   const validatePassword = () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error('All fields are required');
+      toast.error("All fields are required");
       return false;
     }
 
     if (newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters long');
+      toast.error("New password must be at least 6 characters long");
       return false;
     }
 
     if (newPassword !== confirmPassword) {
-      toast.error('New passwords do not match');
+      toast.error("New passwords do not match");
       return false;
     }
 
     if (newPassword === currentPassword) {
-      toast.error('New password must be different from temporary password');
+      toast.error("New password must be different from temporary password");
       return false;
     }
 
@@ -44,23 +50,23 @@ const ForcePasswordChangeModal = ({ isOpen, onPasswordChanged, userEmail }) => {
     setLoading(true);
 
     try {
-      const response = await API.put('/auth/change-password', {
+      const response = await API.put("/auth/change-password", {
         currentPassword,
-        newPassword
+        newPassword,
       });
 
-      toast.success(response.data.message || 'Password changed successfully!');
-      
+      toast.success(response.data.message || "Password changed successfully!");
+
       // Clear form
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
 
       // Notify parent component
       onPasswordChanged();
     } catch (error) {
-      console.error('Password change error:', error);
-      toast.error(error.response?.data?.message || 'Failed to change password');
+      console.error("Password change error:", error);
+      toast.error(error.response?.data?.message || "Failed to change password");
     } finally {
       setLoading(false);
     }
@@ -88,8 +94,9 @@ const ForcePasswordChangeModal = ({ isOpen, onPasswordChanged, userEmail }) => {
           {/* Warning Message */}
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-6">
             <p className="text-sm text-yellow-800 dark:text-yellow-300">
-              <strong>Welcome!</strong> For security reasons, you must change your temporary password 
-              before accessing the system. This is a one-time requirement.
+              <strong>Welcome!</strong> For security reasons, you must change
+              your temporary password before accessing the system. This is a
+              one-time requirement.
             </p>
           </div>
 
@@ -101,7 +108,7 @@ const ForcePasswordChangeModal = ({ isOpen, onPasswordChanged, userEmail }) => {
             <div className="relative">
               <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
-                type={showCurrent ? 'text' : 'password'}
+                type={showCurrent ? "text" : "password"}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -126,7 +133,7 @@ const ForcePasswordChangeModal = ({ isOpen, onPasswordChanged, userEmail }) => {
             <div className="relative">
               <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
-                type={showNew ? 'text' : 'password'}
+                type={showNew ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -143,7 +150,9 @@ const ForcePasswordChangeModal = ({ isOpen, onPasswordChanged, userEmail }) => {
               </button>
             </div>
             {newPassword && newPassword.length < 6 && (
-              <p className="text-xs text-red-500 mt-1">Password must be at least 6 characters</p>
+              <p className="text-xs text-red-500 mt-1">
+                Password must be at least 6 characters
+              </p>
             )}
           </div>
 
@@ -155,7 +164,7 @@ const ForcePasswordChangeModal = ({ isOpen, onPasswordChanged, userEmail }) => {
             <div className="relative">
               <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
-                type={showConfirm ? 'text' : 'password'}
+                type={showConfirm ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -172,7 +181,9 @@ const ForcePasswordChangeModal = ({ isOpen, onPasswordChanged, userEmail }) => {
               </button>
             </div>
             {confirmPassword && newPassword !== confirmPassword && (
-              <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
+              <p className="text-xs text-red-500 mt-1">
+                Passwords do not match
+              </p>
             )}
             {confirmPassword && newPassword === confirmPassword && (
               <p className="text-xs text-green-500 mt-1">✓ Passwords match</p>
@@ -194,7 +205,11 @@ const ForcePasswordChangeModal = ({ isOpen, onPasswordChanged, userEmail }) => {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading || newPassword !== confirmPassword || newPassword.length < 6}
+            disabled={
+              loading ||
+              newPassword !== confirmPassword ||
+              newPassword.length < 6
+            }
             className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (

@@ -1,27 +1,33 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
-import { useContext, useState, useEffect } from 'react';
-import { AuthProvider, AuthContext } from './context/AuthContext';
-import { ThemeProvider, ThemeContext } from './context/ThemeContext';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import DepartmentSelectionModal from './components/common/DepartmentSelectionModal';
-import { FaMoon, FaSun } from 'react-icons/fa';
-import { FaLock } from 'react-icons/fa';
-import ChangePasswordModal from './components/common/ChangePasswordModal';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Link,
+} from "react-router-dom";
+import { useContext, useState, useEffect } from "react";
+import { AuthProvider, AuthContext } from "./context/AuthContext";
+import { ThemeProvider, ThemeContext } from "./context/ThemeContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import DepartmentSelectionModal from "./components/common/DepartmentSelectionModal";
+import { FaMoon, FaSun } from "react-icons/fa";
+import { FaLock } from "react-icons/fa";
+import ChangePasswordModal from "./components/common/ChangePasswordModal";
 
 // Pages
-import Welcome from './pages/Welcome';
-import Login from './components/auth/Login';
-import Register from './components/auth/Register';
-import ForgotPassword from './pages/ForgotPassword';
+import Welcome from "./pages/Welcome";
+import Login from "./components/auth/Login";
+import Register from "./components/auth/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 
 // Dashboards
-import InternDashboard from './components/dashboard/InternDashboard';
-import HRDashboard from './components/dashboard/HRDashboard';
-import HODDashboard from './components/dashboard/HODDashboard';
-import AdminDashboard from './components/dashboard/AdminDashboard';
-import COSPSDashboard from './components/dashboard/COSPSDashboard';
-import AnalyticsDashboard from './components/dashboard/AnalyticsDashboard';
+import InternDashboard from "./components/dashboard/InternDashboard";
+import HRDashboard from "./components/dashboard/HRDashboard";
+import HODDashboard from "./components/dashboard/HODDashboard";
+import AdminDashboard from "./components/dashboard/AdminDashboard";
+import COSPSDashboard from "./components/dashboard/COSPSDashboard";
+import AnalyticsDashboard from "./components/dashboard/AnalyticsDashboard";
 
 // ====================================================
 // 🔒 Protected Route Component
@@ -59,17 +65,17 @@ const DashboardRouter = () => {
   }
 
   switch (user.role) {
-    case 'intern':
-    case 'attachee':
+    case "intern":
+    case "attachee":
       return <InternDashboard />;
-    case 'hr':
+    case "hr":
       return <HRDashboard />;
-    case 'hod':
+    case "hod":
       return <HODDashboard />;
-    case 'chief_of_staff':
-    case 'principal_secretary':
+    case "chief_of_staff":
+    case "principal_secretary":
       return <COSPSDashboard />;
-    case 'admin':
+    case "admin":
       return <AdminDashboard />;
     default:
       return <Navigate to="/" />;
@@ -113,7 +119,11 @@ const Navbar = () => {
 
             <div className="flex items-center gap-4">
               {/* Analytics Link - For Staff Only */}
-              {(user.role === 'hr' || user.role === 'hod' || user.role === 'admin' || user.role === 'chief_of_staff' || user.role === 'principal_secretary') && (
+              {(user.role === "hr" ||
+                user.role === "hod" ||
+                user.role === "admin" ||
+                user.role === "chief_of_staff" ||
+                user.role === "principal_secretary") && (
                 <Link
                   to="/analytics"
                   className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-medium text-sm"
@@ -136,7 +146,7 @@ const Navbar = () => {
                 onClick={toggleTheme}
                 className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
               >
-                {theme === 'dark' ? (
+                {theme === "dark" ? (
                   <FaSun className="text-yellow-400 text-lg" />
                 ) : (
                   <FaMoon className="text-gray-700 text-lg" />
@@ -178,7 +188,12 @@ function AppContent() {
   const [showDepartmentModal, setShowDepartmentModal] = useState(false);
 
   useEffect(() => {
-    if (user && user.role !== 'admin' && user.role !== 'chief_of_staff' && user.role !== 'principal_secretary') {
+    if (
+      user &&
+      user.role !== "admin" &&
+      user.role !== "chief_of_staff" &&
+      user.role !== "principal_secretary"
+    ) {
       if (!user.department || !user.subdepartment) {
         setShowDepartmentModal(true);
       }
@@ -194,7 +209,10 @@ function AppContent() {
     <>
       <Navbar />
       {showDepartmentModal && (
-        <DepartmentSelectionModal user={user} onComplete={handleDepartmentSet} />
+        <DepartmentSelectionModal
+          user={user}
+          onComplete={handleDepartmentSet}
+        />
       )}
 
       <Routes>
@@ -213,7 +231,15 @@ function AppContent() {
         <Route
           path="/analytics"
           element={
-            <ProtectedRoute allowedRoles={['hr', 'hod', 'admin', 'chief_of_staff', 'principal_secretary']}>
+            <ProtectedRoute
+              allowedRoles={[
+                "hr",
+                "hod",
+                "admin",
+                "chief_of_staff",
+                "principal_secretary",
+              ]}
+            >
               <AnalyticsDashboard />
             </ProtectedRoute>
           }

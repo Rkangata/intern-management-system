@@ -1,26 +1,30 @@
-import { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../../context/AuthContext';
-import { getMyApplications, submitApplication, updateProfile } from '../../utils/api';
-import { toast } from 'react-toastify';
-import { FaFileUpload, FaUser, FaClipboardList } from 'react-icons/fa';
+import { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
+import {
+  getMyApplications,
+  submitApplication,
+  updateProfile,
+} from "../../utils/api";
+import { toast } from "react-toastify";
+import { FaFileUpload, FaUser, FaClipboardList } from "react-icons/fa";
 
 const InternDashboard = () => {
   const { user, checkAuth } = useContext(AuthContext);
   const [applications, setApplications] = useState([]);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(false);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
 
   const [applicationData, setApplicationData] = useState({
-    startDate: '',
-    endDate: '',
-    preferredDepartment: '',
-    preferredSubdepartment: '',
+    startDate: "",
+    endDate: "",
+    preferredDepartment: "",
+    preferredSubdepartment: "",
   });
 
   // ✅ Role-specific documents initialization
   const [documents, setDocuments] = useState(
-    user?.role === 'intern'
+    user?.role === "intern"
       ? {
           appointmentLetter: null,
           degreeCertificate: null,
@@ -46,14 +50,14 @@ const InternDashboard = () => {
   );
 
   const [profileData, setProfileData] = useState({
-    firstName: user?.firstName || '',
-    middleName: user?.middleName || '',
-    lastName: user?.lastName || '',
-    phoneNumber: user?.phoneNumber || '',
-    institution: user?.institution || '',
-    course: user?.course || '',
-    yearOfStudy: user?.yearOfStudy || '',
-    department: user?.department || '',
+    firstName: user?.firstName || "",
+    middleName: user?.middleName || "",
+    lastName: user?.lastName || "",
+    phoneNumber: user?.phoneNumber || "",
+    institution: user?.institution || "",
+    course: user?.course || "",
+    yearOfStudy: user?.yearOfStudy || "",
+    department: user?.department || "",
   });
 
   useEffect(() => {
@@ -65,7 +69,7 @@ const InternDashboard = () => {
       const { data } = await getMyApplications();
       setApplications(data);
     } catch (error) {
-      toast.error('Failed to fetch applications');
+      toast.error("Failed to fetch applications");
     }
   };
 
@@ -83,12 +87,18 @@ const InternDashboard = () => {
 
     try {
       const formData = new FormData();
-      formData.append('startDate', applicationData.startDate);
-      formData.append('endDate', applicationData.endDate);
-      formData.append('preferredDepartment', applicationData.preferredDepartment);
-      formData.append('preferredSubdepartment', applicationData.preferredSubdepartment);
-      formData.append('applicantRole', user.role); // ✅ Important: Send role
-      
+      formData.append("startDate", applicationData.startDate);
+      formData.append("endDate", applicationData.endDate);
+      formData.append(
+        "preferredDepartment",
+        applicationData.preferredDepartment
+      );
+      formData.append(
+        "preferredSubdepartment",
+        applicationData.preferredSubdepartment
+      );
+      formData.append("applicantRole", user.role); // ✅ Important: Send role
+
       // Append all documents
       Object.keys(documents).forEach((key) => {
         if (documents[key]) {
@@ -97,45 +107,48 @@ const InternDashboard = () => {
       });
 
       await submitApplication(formData);
-      toast.success('Application submitted successfully!');
+      toast.success("Application submitted successfully!");
       setShowApplicationForm(false);
       fetchApplications();
-      
+
       // Reset form
-      setApplicationData({ 
-        startDate: '', 
-        endDate: '', 
-        preferredDepartment: '',
-        preferredSubdepartment: '' 
+      setApplicationData({
+        startDate: "",
+        endDate: "",
+        preferredDepartment: "",
+        preferredSubdepartment: "",
       });
-      
+
       // Reset documents based on role
-      const resetDocs = user?.role === 'intern'
-        ? {
-            appointmentLetter: null,
-            degreeCertificate: null,
-            transcripts: null,
-            nationalIdOrPassport: null,
-            kraPinCertificate: null,
-            goodConductCertificate: null,
-            passportPhotos: null,
-            shifCard: null,
-            insuranceCover: null,
-            nssfCard: null,
-            bioDataForm: null,
-          }
-        : {
-            applicationLetter: null,
-            cv: null,
-            attacheeTranscripts: null,
-            recommendationLetter: null,
-            attacheeNationalId: null,
-            attacheeInsurance: null,
-            goodConductCertOrReceipt: null,
-          };
+      const resetDocs =
+        user?.role === "intern"
+          ? {
+              appointmentLetter: null,
+              degreeCertificate: null,
+              transcripts: null,
+              nationalIdOrPassport: null,
+              kraPinCertificate: null,
+              goodConductCertificate: null,
+              passportPhotos: null,
+              shifCard: null,
+              insuranceCover: null,
+              nssfCard: null,
+              bioDataForm: null,
+            }
+          : {
+              applicationLetter: null,
+              cv: null,
+              attacheeTranscripts: null,
+              recommendationLetter: null,
+              attacheeNationalId: null,
+              attacheeInsurance: null,
+              goodConductCertOrReceipt: null,
+            };
       setDocuments(resetDocs);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to submit application');
+      toast.error(
+        error.response?.data?.message || "Failed to submit application"
+      );
     } finally {
       setLoading(false);
     }
@@ -156,10 +169,10 @@ const InternDashboard = () => {
       });
 
       await updateProfile(formData);
-      toast.success('Profile updated successfully!');
+      toast.success("Profile updated successfully!");
       checkAuth();
     } catch (error) {
-      toast.error('Failed to update profile');
+      toast.error("Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -167,23 +180,25 @@ const InternDashboard = () => {
 
   const getStatusBadge = (status) => {
     const statusColors = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      hr_review: 'bg-blue-100 text-blue-800',
-      hod_review: 'bg-purple-100 text-purple-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
+      pending: "bg-yellow-100 text-yellow-800",
+      hr_review: "bg-blue-100 text-blue-800",
+      hod_review: "bg-purple-100 text-purple-800",
+      approved: "bg-green-100 text-green-800",
+      rejected: "bg-red-100 text-red-800",
     };
 
     const statusText = {
-      pending: 'Pending',
-      hr_review: 'HR Review',
-      hod_review: 'HOD Review',
-      approved: 'Approved',
-      rejected: 'Rejected',
+      pending: "Pending",
+      hr_review: "HR Review",
+      hod_review: "HOD Review",
+      approved: "Approved",
+      rejected: "Rejected",
     };
 
     return (
-      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${statusColors[status]}`}>
+      <span
+        className={`px-3 py-1 rounded-full text-sm font-semibold ${statusColors[status]}`}
+      >
         {statusText[status]}
       </span>
     );
@@ -191,29 +206,77 @@ const InternDashboard = () => {
 
   // ✅ Get role-specific document fields
   const getDocumentFields = () => {
-    if (user?.role === 'intern') {
+    if (user?.role === "intern") {
       return [
-        { name: 'appointmentLetter', label: 'Copy of Appointment Letter', required: true },
-        { name: 'degreeCertificate', label: 'Bachelor\'s Degree Certificate', required: true },
-        { name: 'transcripts', label: 'Transcripts', required: true },
-        { name: 'nationalIdOrPassport', label: 'National ID or Passport', required: true },
-        { name: 'kraPinCertificate', label: 'KRA PIN Certificate', required: true },
-        { name: 'goodConductCertificate', label: 'Valid Certificate of Good Conduct', required: true },
-        { name: 'passportPhotos', label: 'Two Colour Passport Photos', required: true },
-        { name: 'shifCard', label: 'SHIF Card', required: true },
-        { name: 'insuranceCover', label: 'Personal Accident Insurance Cover', required: true },
-        { name: 'nssfCard', label: 'NSSF Card', required: true },
-        { name: 'bioDataForm', label: 'Duly Filled Personal Bio Data Form', required: true },
+        {
+          name: "appointmentLetter",
+          label: "Copy of Appointment Letter",
+          required: true,
+        },
+        {
+          name: "degreeCertificate",
+          label: "Bachelor's Degree Certificate",
+          required: true,
+        },
+        { name: "transcripts", label: "Transcripts", required: true },
+        {
+          name: "nationalIdOrPassport",
+          label: "National ID or Passport",
+          required: true,
+        },
+        {
+          name: "kraPinCertificate",
+          label: "KRA PIN Certificate",
+          required: true,
+        },
+        {
+          name: "goodConductCertificate",
+          label: "Valid Certificate of Good Conduct",
+          required: true,
+        },
+        {
+          name: "passportPhotos",
+          label: "Two Colour Passport Photos",
+          required: true,
+        },
+        { name: "shifCard", label: "SHIF Card", required: true },
+        {
+          name: "insuranceCover",
+          label: "Personal Accident Insurance Cover",
+          required: true,
+        },
+        { name: "nssfCard", label: "NSSF Card", required: true },
+        {
+          name: "bioDataForm",
+          label: "Duly Filled Personal Bio Data Form",
+          required: true,
+        },
       ];
     } else {
       return [
-        { name: 'applicationLetter', label: 'Application Letter', required: true },
-        { name: 'cv', label: 'CV/Resume', required: true },
-        { name: 'attacheeTranscripts', label: 'Academic Transcripts', required: true },
-        { name: 'recommendationLetter', label: 'Recommendation Letter', required: true },
-        { name: 'attacheeNationalId', label: 'National ID', required: true },
-        { name: 'attacheeInsurance', label: 'Insurance Cover', required: true },
-        { name: 'goodConductCertOrReceipt', label: 'Certificate of Good Conduct / Receipt', required: true },
+        {
+          name: "applicationLetter",
+          label: "Application Letter",
+          required: true,
+        },
+        { name: "cv", label: "CV/Resume", required: true },
+        {
+          name: "attacheeTranscripts",
+          label: "Academic Transcripts",
+          required: true,
+        },
+        {
+          name: "recommendationLetter",
+          label: "Recommendation Letter",
+          required: true,
+        },
+        { name: "attacheeNationalId", label: "National ID", required: true },
+        { name: "attacheeInsurance", label: "Insurance Cover", required: true },
+        {
+          name: "goodConductCertOrReceipt",
+          label: "Certificate of Good Conduct / Receipt",
+          required: true,
+        },
       ];
     }
   };
@@ -227,7 +290,7 @@ const InternDashboard = () => {
             Welcome, {user?.fullName}
           </h1>
           <p className="text-gray-600 mt-1">
-            {user?.role === 'intern' ? 'Intern' : 'Attachee'} Dashboard
+            {user?.role === "intern" ? "Intern" : "Attachee"} Dashboard
           </p>
         </div>
       </div>
@@ -237,33 +300,33 @@ const InternDashboard = () => {
         <div className="container mx-auto px-4">
           <div className="flex space-x-8">
             <button
-              onClick={() => setActiveTab('overview')}
+              onClick={() => setActiveTab("overview")}
               className={`py-4 px-2 font-semibold ${
-                activeTab === 'overview'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-600 hover:text-gray-800'
+                activeTab === "overview"
+                  ? "border-b-2 border-blue-500 text-blue-600"
+                  : "text-gray-600 hover:text-gray-800"
               }`}
             >
               <FaClipboardList className="inline mr-2" />
               Overview
             </button>
             <button
-              onClick={() => setActiveTab('applications')}
+              onClick={() => setActiveTab("applications")}
               className={`py-4 px-2 font-semibold ${
-                activeTab === 'applications'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-600 hover:text-gray-800'
+                activeTab === "applications"
+                  ? "border-b-2 border-blue-500 text-blue-600"
+                  : "text-gray-600 hover:text-gray-800"
               }`}
             >
               <FaFileUpload className="inline mr-2" />
               My Applications
             </button>
             <button
-              onClick={() => setActiveTab('profile')}
+              onClick={() => setActiveTab("profile")}
               className={`py-4 px-2 font-semibold ${
-                activeTab === 'profile'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-600 hover:text-gray-800'
+                activeTab === "profile"
+                  ? "border-b-2 border-blue-500 text-blue-600"
+                  : "text-gray-600 hover:text-gray-800"
               }`}
             >
               <FaUser className="inline mr-2" />
@@ -276,7 +339,7 @@ const InternDashboard = () => {
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
         {/* Overview Tab */}
-        {activeTab === 'overview' && (
+        {activeTab === "overview" && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white rounded-lg shadow p-6">
@@ -298,7 +361,14 @@ const InternDashboard = () => {
                   <div>
                     <p className="text-gray-600 text-sm">Pending</p>
                     <p className="text-3xl font-bold text-yellow-600 mt-2">
-                      {applications.filter((app) => app.status === 'pending' || app.status === 'hr_review' || app.status === 'hod_review').length}
+                      {
+                        applications.filter(
+                          (app) =>
+                            app.status === "pending" ||
+                            app.status === "hr_review" ||
+                            app.status === "hod_review"
+                        ).length
+                      }
                     </p>
                   </div>
                   <div className="bg-yellow-100 p-3 rounded-full">
@@ -312,7 +382,10 @@ const InternDashboard = () => {
                   <div>
                     <p className="text-gray-600 text-sm">Approved</p>
                     <p className="text-3xl font-bold text-green-600 mt-2">
-                      {applications.filter((app) => app.status === 'approved').length}
+                      {
+                        applications.filter((app) => app.status === "approved")
+                          .length
+                      }
                     </p>
                   </div>
                   <div className="bg-green-100 p-3 rounded-full">
@@ -323,11 +396,13 @@ const InternDashboard = () => {
             </div>
 
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+              <h2 className="text-xl font-bold text-gray-800 mb-4">
+                Quick Actions
+              </h2>
               <button
                 onClick={() => {
                   setShowApplicationForm(true);
-                  setActiveTab('applications');
+                  setActiveTab("applications");
                 }}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
               >
@@ -338,12 +413,14 @@ const InternDashboard = () => {
         )}
 
         {/* Applications Tab */}
-        {activeTab === 'applications' && (
+        {activeTab === "applications" && (
           <div className="space-y-6">
             {!showApplicationForm ? (
               <>
                 <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-gray-800">My Applications</h2>
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    My Applications
+                  </h2>
                   <button
                     onClick={() => setShowApplicationForm(true)}
                     className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
@@ -371,14 +448,19 @@ const InternDashboard = () => {
                 ) : (
                   <div className="grid grid-cols-1 gap-6">
                     {applications.map((app) => (
-                      <div key={app._id} className="bg-white rounded-lg shadow p-6">
+                      <div
+                        key={app._id}
+                        className="bg-white rounded-lg shadow p-6"
+                      >
                         <div className="flex justify-between items-start mb-4">
                           <div>
                             <h3 className="text-lg font-semibold text-gray-800">
-                              {app.preferredDepartment} - {app.preferredSubdepartment}
+                              {app.preferredDepartment} -{" "}
+                              {app.preferredSubdepartment}
                             </h3>
                             <p className="text-sm text-gray-600 mt-1">
-                              {new Date(app.startDate).toLocaleDateString()} - {new Date(app.endDate).toLocaleDateString()}
+                              {new Date(app.startDate).toLocaleDateString()} -{" "}
+                              {new Date(app.endDate).toLocaleDateString()}
                             </p>
                           </div>
                           {getStatusBadge(app.status)}
@@ -387,33 +469,51 @@ const InternDashboard = () => {
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
                             <p className="text-gray-600">Submitted</p>
-                            <p className="font-semibold">{new Date(app.createdAt).toLocaleDateString()}</p>
+                            <p className="font-semibold">
+                              {new Date(app.createdAt).toLocaleDateString()}
+                            </p>
                           </div>
                           {app.hrReviewDate && (
                             <div>
                               <p className="text-gray-600">HR Review</p>
-                              <p className="font-semibold">{new Date(app.hrReviewDate).toLocaleDateString()}</p>
+                              <p className="font-semibold">
+                                {new Date(
+                                  app.hrReviewDate
+                                ).toLocaleDateString()}
+                              </p>
                             </div>
                           )}
                           {app.hodReviewDate && (
                             <div>
                               <p className="text-gray-600">HOD Review</p>
-                              <p className="font-semibold">{new Date(app.hodReviewDate).toLocaleDateString()}</p>
+                              <p className="font-semibold">
+                                {new Date(
+                                  app.hodReviewDate
+                                ).toLocaleDateString()}
+                              </p>
                             </div>
                           )}
                         </div>
 
                         {app.hrComments && (
                           <div className="mt-4 p-3 bg-blue-50 rounded">
-                            <p className="text-sm font-semibold text-blue-800">HR Comments:</p>
-                            <p className="text-sm text-gray-700 mt-1">{app.hrComments}</p>
+                            <p className="text-sm font-semibold text-blue-800">
+                              HR Comments:
+                            </p>
+                            <p className="text-sm text-gray-700 mt-1">
+                              {app.hrComments}
+                            </p>
                           </div>
                         )}
 
                         {app.hodComments && (
                           <div className="mt-4 p-3 bg-purple-50 rounded">
-                            <p className="text-sm font-semibold text-purple-800">HOD Comments:</p>
-                            <p className="text-sm text-gray-700 mt-1">{app.hodComments}</p>
+                            <p className="text-sm font-semibold text-purple-800">
+                              HOD Comments:
+                            </p>
+                            <p className="text-sm text-gray-700 mt-1">
+                              {app.hodComments}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -425,7 +525,9 @@ const InternDashboard = () => {
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-bold text-gray-800">
-                    Submit {user?.role === 'intern' ? 'Internship' : 'Attachment'} Application
+                    Submit{" "}
+                    {user?.role === "intern" ? "Internship" : "Attachment"}{" "}
+                    Application
                   </h2>
                   <button
                     onClick={() => setShowApplicationForm(false)}
@@ -477,15 +579,19 @@ const InternDashboard = () => {
                           setApplicationData({
                             ...applicationData,
                             preferredDepartment: e.target.value,
-                            preferredSubdepartment: '',
+                            preferredSubdepartment: "",
                           });
                         }}
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                       >
                         <option value="">Select Department</option>
-                        <option value="OPCS">Office of the Prime Cabinet Secretary</option>
-                        <option value="SDPA">State Department for Parliamentary Affairs</option>
+                        <option value="OPCS">
+                          Office of the Prime Cabinet Secretary
+                        </option>
+                        <option value="SDPA">
+                          State Department for Parliamentary Affairs
+                        </option>
                       </select>
                     </div>
 
@@ -502,7 +608,7 @@ const InternDashboard = () => {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
                       >
                         <option value="">Select Subdepartment</option>
-                        {applicationData.preferredDepartment === 'SDPA' && (
+                        {applicationData.preferredDepartment === "SDPA" && (
                           <>
                             <option value="ADMIN">Administration</option>
                             <option value="CPPMD">CPPMD</option>
@@ -510,11 +616,13 @@ const InternDashboard = () => {
                             <option value="FINANCE">Finance Unit</option>
                             <option value="ACCOUNTS">Accounts Unit</option>
                             <option value="SCM">SCM Unit</option>
-                            <option value="PUBLIC_COMM">Public Communications Unit</option>
+                            <option value="PUBLIC_COMM">
+                              Public Communications Unit
+                            </option>
                             <option value="ICT">ICT Unit</option>
                           </>
                         )}
-                        {applicationData.preferredDepartment === 'OPCS' && (
+                        {applicationData.preferredDepartment === "OPCS" && (
                           <>
                             <option value="ADMIN">Administration</option>
                             <option value="POLICY">Policy & Planning</option>
@@ -524,7 +632,9 @@ const InternDashboard = () => {
                             <option value="FINANCE">Finance Unit</option>
                             <option value="ACCOUNTS">Accounts Unit</option>
                             <option value="SCM">SCM Unit</option>
-                            <option value="PUBLIC_COMM">Public Communications Unit</option>
+                            <option value="PUBLIC_COMM">
+                              Public Communications Unit
+                            </option>
                             <option value="ICT">ICT Unit</option>
                           </>
                         )}
@@ -535,13 +645,19 @@ const InternDashboard = () => {
                   {/* ✅ Role-Specific Document Uploads */}
                   <div className="border-t pt-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                      Required Documents {user?.role === 'intern' ? '(11 documents)' : '(7 documents)'}
+                      Required Documents{" "}
+                      {user?.role === "intern"
+                        ? "(11 documents)"
+                        : "(7 documents)"}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {getDocumentFields().map((field) => (
                         <div key={field.name}>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            {field.label} {field.required && <span className="text-red-500">*</span>}
+                            {field.label}{" "}
+                            {field.required && (
+                              <span className="text-red-500">*</span>
+                            )}
                           </label>
                           <input
                             type="file"
@@ -562,7 +678,7 @@ const InternDashboard = () => {
                       disabled={loading}
                       className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
                     >
-                      {loading ? 'Submitting...' : 'Submit Application'}
+                      {loading ? "Submitting..." : "Submit Application"}
                     </button>
                     <button
                       type="button"
@@ -579,9 +695,11 @@ const InternDashboard = () => {
         )}
 
         {/* Profile Tab */}
-        {activeTab === 'profile' && (
+        {activeTab === "profile" && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Update Profile</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">
+              Update Profile
+            </h2>
 
             <form onSubmit={handleProfileUpdate} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -702,7 +820,7 @@ const InternDashboard = () => {
                 disabled={loading}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
               >
-                {loading ? 'Updating...' : 'Update Profile'}
+                {loading ? "Updating..." : "Update Profile"}
               </button>
             </form>
           </div>
