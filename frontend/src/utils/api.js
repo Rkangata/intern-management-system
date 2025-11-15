@@ -71,6 +71,10 @@ export const hrReviewApplication = (id, comments, hodDepartment, hodSubdepartmen
 export const hodReviewApplication = (id, action, comments) =>
   API.put(`/applications/${id}/hod-review`, { action, comments });
 
+// ✅ NEW: HR Final Review - Send Offer Email
+export const hrFinalReview = (id, offerMessage) =>
+  API.put(`/applications/${id}/hr-final-review`, { offerMessage });
+
 export const updateApplication = (id, formData) =>
   API.put(`/applications/${id}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -84,6 +88,12 @@ export const createUser = (userData) => API.post('/admin/create-user', userData)
 export const updateUser = (id, userData) => API.put(`/admin/users/${id}`, userData);
 export const deleteUser = (id) => API.delete(`/admin/users/${id}`);
 export const getAllApplicants = () => API.get('/admin/all-applicants');
+
+// ==========================
+// HR APIs
+// ==========================
+export const createUserHR = (userData) => API.post('/hr/create-user', userData); // ✅ NEW
+export const getCreatedUsers = () => API.get('/hr/created-users'); // ✅ NEW
 
 // ==========================
 // ANALYTICS APIs

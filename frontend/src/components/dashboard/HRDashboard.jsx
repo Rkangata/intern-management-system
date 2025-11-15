@@ -2,8 +2,22 @@ import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { getAllApplications, hrReviewApplication } from '../../utils/api';
 import { toast } from 'react-toastify';
-import { FaSearch, FaFilter, FaTimes, FaFileExcel, FaFilePdf, FaDownload, FaEye, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { 
+  FaSearch, 
+  FaFilter, 
+  FaTimes, 
+  FaFileExcel, 
+  FaFilePdf, 
+  FaDownload, 
+  FaEye, 
+  FaChevronDown, 
+  FaChevronUp,
+  FaPaperPlane,
+  FaUserPlus  // ✅ NEW: Added user plus icon
+} from 'react-icons/fa';
 import { exportToExcel, exportToPDF } from '../../utils/exportUtils';
+import SendOfferEmailModal from '../common/SendOfferEmailModal';
+import CreateUserModal from '../common/CreateUserModal'; // ✅ NEW IMPORT
 
 const HRDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -14,6 +28,11 @@ const HRDashboard = () => {
   const [comments, setComments] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedHODDept, setSelectedHODDept] = useState({ department: '', subdepartment: '' });
+  
+  // State
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [selectedOfferApp, setSelectedOfferApp] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false); // ✅ NEW: Create user modal state
 
   const [filters, setFilters] = useState({
     status: 'all',
@@ -149,11 +168,13 @@ const HRDashboard = () => {
     setExpandedApp(expandedApp === appId ? null : appId);
   };
 
+  // ✅ UPDATED: Added new status
   const getStatusBadge = (status) => {
     const colors = {
       pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
       hr_review: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
       hod_review: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+      hr_final_review: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300', // ✅ NEW
       approved: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
       rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
     };
@@ -161,6 +182,7 @@ const HRDashboard = () => {
       pending: 'Pending',
       hr_review: 'HR Review',
       hod_review: 'HOD Review',
+      hr_final_review: 'Ready for Offer', // ✅ NEW
       approved: 'Approved',
       rejected: 'Rejected',
     };
@@ -171,10 +193,12 @@ const HRDashboard = () => {
     );
   };
 
+  // ✅ UPDATED: Added new status count
   const filteredStats = {
     total: filteredApplications.length,
     pending: filteredApplications.filter(app => app.status === 'pending').length,
     hodReview: filteredApplications.filter(app => app.status === 'hod_review').length,
+    hrFinalReview: filteredApplications.filter(app => app.status === 'hr_final_review').length, // ✅ NEW
     approved: filteredApplications.filter(app => app.status === 'approved').length,
   };
 
@@ -195,13 +219,25 @@ const HRDashboard = () => {
         </div>
       </div>
 
+      {/* ✅ NEW: Create User Button - Added after header */}
+      <div className="container mx-auto px-4 py-4">
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2"
+        >
+          <FaUserPlus />
+          Create Intern/Attachee Account
+        </button>
+      </div>
+
       <div className="container mx-auto px-4 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* ✅ UPDATED: Stats with new card */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           {[
             ['Total Applications', filteredStats.total, 'text-gray-800 dark:text-white'],
             ['Pending Review', filteredStats.pending, 'text-yellow-600'],
             ['With HOD', filteredStats.hodReview, 'text-purple-600'],
+            ['Ready for Offer', filteredStats.hrFinalReview, 'text-indigo-600'], // ✅ NEW
             ['Approved', filteredStats.approved, 'text-green-600'],
           ].map(([label, count, color], i) => (
             <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -274,6 +310,7 @@ const HRDashboard = () => {
                   <option value="pending">Pending</option>
                   <option value="hr_review">HR Review</option>
                   <option value="hod_review">HOD Review</option>
+                  <option value="hr_final_review">Ready for Offer</option> {/* ✅ NEW */}
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                 </select>
@@ -561,6 +598,35 @@ const HRDashboard = () => {
                         )}
                       </div>
                     )}
+
+                    {/* ✅ NEW: Send Offer Email Button - Only show for hr_final_review status */}
+                    {app.status === 'hr_final_review' && (
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4 mb-4">
+                          <div className="flex items-start gap-3">
+                            <div className="text-2xl">🎉</div>
+                            <div>
+                              <h4 className="font-semibold text-green-900 dark:text-green-300 mb-1">
+                                HOD Approved - Ready for Offer Email
+                              </h4>
+                              <p className="text-sm text-green-800 dark:text-green-400">
+                                This application has been approved by the HOD. You can now send the final offer email to the applicant.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedOfferApp(app);
+                            setShowOfferModal(true);
+                          }}
+                          className="w-full bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                        >
+                          <FaPaperPlane />
+                          Send Offer Email & Approve Application
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -568,6 +634,29 @@ const HRDashboard = () => {
           )}
         </div>
       </div>
+
+      {/* ✅ NEW: Send Offer Email Modal */}
+      <SendOfferEmailModal
+        isOpen={showOfferModal}
+        onClose={() => {
+          setShowOfferModal(false);
+          setSelectedOfferApp(null);
+        }}
+        application={selectedOfferApp}
+        onSuccess={() => {
+          fetchApplications();
+        }}
+      />
+
+      {/* ✅ NEW: Create User Modal */}
+      <CreateUserModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onUserCreated={() => {
+          // Optionally refresh list or show success
+          toast.success('User account created successfully!');
+        }}
+      />
     </div>
   );
 };
