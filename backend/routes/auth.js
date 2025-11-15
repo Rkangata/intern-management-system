@@ -140,6 +140,7 @@ router.post('/login', async (req, res) => {
       role: user.role,
       department: user.department,
       subdepartment: user.subdepartment,
+      mustChangePassword: user.mustChangePassword || false, // ✅ NEW: Include this flag
       token: generateToken(user._id),
     });
   } catch (error) {

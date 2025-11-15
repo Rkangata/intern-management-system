@@ -43,6 +43,7 @@ app.use('/api/departments', require('./routes/department'));
 app.use('/api/applications', require('./routes/application'));
 app.use('/api/documents', require('./routes/document'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/hr', require('./routes/hr')); // ✅ NEW: HR routes
 
 // Health check
 app.get('/', (req, res) => {

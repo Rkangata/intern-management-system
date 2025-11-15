@@ -96,6 +96,19 @@ const userSchema = new mongoose.Schema({
     default: true
   },
 
+  // ✅ NEW: Force password change on first login
+  mustChangePassword: {
+    type: Boolean,
+    default: false
+  },
+
+  // ✅ NEW: Track who created this user (for HR-created accounts)
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+
   createdAt: {
     type: Date,
     default: Date.now
